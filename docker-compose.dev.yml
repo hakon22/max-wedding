@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: max-wedding-dev:latest
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3016:3016"
+    volumes:
+      - "C:/srv/logs:/srv/logs"
+      - "C:/Program Files/Git/max-wedding/public:/app/public"
+    command: start:server:docker:dev

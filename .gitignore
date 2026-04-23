@@ -1,0 +1,9 @@
+/.next/
+/dist/
+*.tsbuildinfo
+.tsconfig.server-emit.json
+/node_modules/
+.env
+.env.local
+*.log
+.DS_Store

@@ -1,0 +1,29 @@
+services:
+  migrations:
+    image: ${DOCKER_USERNAME}/max-wedding:latest
+    network_mode: "host"
+    env_file: .env
+    restart: "no"
+    command: migration:run:prod
+    volumes:
+      - /srv/logs:/srv/logs
+      - /var/www/veremevs.online/public:/app/public
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  server:
+    image: ${DOCKER_USERNAME}/max-wedding:latest
+    network_mode: "host"
+    env_file: .env
+    ports:
+      - "3016:3016"
+    volumes:
+      - /srv/logs:/srv/logs
+      - /var/www/veremevs.online/public:/app/public
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    command: start:server:prod
+    depends_on:
+      migrations:
+        condition: service_completed_successfully

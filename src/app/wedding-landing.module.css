@@ -1,0 +1,992 @@
+/* Референс: сериф-заголовки, аккуратные линии; фон — тёплый градиент и лёгкий паттерн сердечек */
+
+.landingRoot {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  color: #1c1c1c;
+  background-color: #f7f3ef;
+  background-image:
+    radial-gradient(1200px 560px at 50% -12%, rgba(255, 252, 248, 0.98), rgba(247, 243, 239, 0.55) 48%, transparent 72%),
+    radial-gradient(880px 520px at 108% 92%, rgba(228, 198, 188, 0.28), transparent 58%),
+    radial-gradient(640px 420px at -8% 78%, rgba(218, 200, 210, 0.18), transparent 52%);
+  /* Заголовки и акцентный сериф: переопределяется панелью превью шрифтов */
+  --font-wedding-display: var(--font-wedding-serif);
+  /* Основной текст блока .page: переопределяется второй панелью превью */
+  --font-wedding-body: var(--font-geist);
+}
+
+/* Декоративные сердечки: слой на всю высоту лендинга, под контентом (см. public/wedding-hearts-bg.svg) */
+.landingRoot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url('/wedding-hearts-bg.svg');
+  background-repeat: repeat;
+  background-size: 152px 152px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landingRoot::before {
+    animation: landingHeartsDrift 96s linear infinite;
+  }
+}
+
+@keyframes landingHeartsDrift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 304px 152px;
+  }
+}
+
+/* Временная панель: выбор шрифта для показа заказчику */
+.fontPreviewBar {
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 10px 16px 10px min(16px, max(12px, env(safe-area-inset-left)));
+  padding-right: max(16px, calc(88px + env(safe-area-inset-right)));
+  background: linear-gradient(180deg, #2c2622 0%, #1f1b19 100%);
+  color: #f5f0ea;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.fontPreviewBarLabel {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.88;
+  flex-shrink: 0;
+}
+
+.fontPreviewBarSelect {
+  flex: 1 1 200px;
+  min-width: min(100%, 220px);
+  max-width: 420px;
+}
+
+.fontPreviewBarSelect :global(.ant-select-selector) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: #faf6f2 !important;
+}
+
+.fontPreviewBarSelect :global(.ant-select-selection-placeholder),
+.fontPreviewBarSelect :global(.ant-select-arrow) {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.fontPreviewBarSelect :global(.ant-select-selection-item) {
+  color: #fff !important;
+}
+
+.fontPreviewBarRows {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 14px 28px;
+  align-items: flex-start;
+}
+
+.fontPreviewBarRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  flex: 1 1 min(100%, 300px);
+  min-width: min(100%, 240px);
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: min(720px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 32px clamp(18px, 4vw, 28px) 36px;
+  font-family: var(--font-wedding-body), system-ui, sans-serif;
+  /* Панель над узором: читаемость без «тяжёлой» белой плашки */
+  background: rgba(255, 252, 248, 0.94);
+  border: 1px solid rgba(88, 58, 50, 0.1);
+  border-radius: 26px;
+  box-shadow:
+    0 12px 48px rgba(45, 32, 28, 0.09),
+    0 1px 0 rgba(255, 255, 255, 0.75) inset;
+}
+
+@supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+  .page {
+    background: rgba(255, 252, 248, 0.82);
+    -webkit-backdrop-filter: blur(18px) saturate(1.05);
+    backdrop-filter: blur(18px) saturate(1.05);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .page {
+    background: #fffbf7;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/*
+ * Typography / Form в Ant Design задают font-family из токена (не inherit с .page),
+ * поэтому превью «обычного текста» не подхватывалось — явно тянем --font-wedding-body.
+ * Заголовки секций (.sectionTitle) по-прежнему с !important на display-шрифт.
+ */
+.landingRoot .page :global(.ant-typography),
+.landingRoot .page :global(.ant-card),
+.landingRoot .page :global(.ant-form-item-label > label),
+.landingRoot .page :global(.ant-input),
+.landingRoot .page :global(.ant-input-affix-wrapper),
+.landingRoot .page :global(.ant-input-affix-wrapper input.ant-input),
+.landingRoot .page :global(.ant-select .ant-select-selector),
+.landingRoot .page :global(textarea.ant-input),
+.landingRoot .page :global(.ant-radio-button-wrapper),
+.landingRoot .page :global(.ant-checkbox-wrapper),
+.landingRoot .page :global(.ant-btn) {
+  font-family: var(--font-wedding-body), system-ui, sans-serif;
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0 0 48px;
+  min-height: min(100dvh, 100svh);
+  overflow: hidden;
+  background: #e8e6e3;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: url('/wedding-hearts-bg.svg');
+  background-repeat: repeat;
+  background-size: 148px 148px;
+  opacity: 0.5;
+}
+
+.heroImage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--hero-object-position, center center);
+  opacity: 0;
+  transform: scale(1.03);
+  animation: heroFadeIn 1.35s ease-out 0.12s forwards;
+}
+
+/* Мобильный герой: пара по центру кадра, как в макете (cover + center) */
+@media (max-width: 899px) {
+  .heroImage {
+    object-position: center center;
+  }
+}
+
+@media (min-width: 900px) {
+  .heroImage {
+    object-fit: contain;
+    object-position: center center;
+  }
+}
+
+@keyframes heroFadeIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.42), transparent 52%);
+  pointer-events: none;
+}
+
+.heroText {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  right: 0;
+  bottom: max(11%, env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
+  padding: 0 20px max(10px, env(safe-area-inset-bottom, 0px));
+}
+
+.heroNames {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2em;
+  font-family: var(--font-wedding-display), 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(2rem, 6.4vw, 3.2rem);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0 0 0.5em;
+  line-height: 1.12;
+}
+
+.heroNameLine1 {
+  display: block;
+}
+
+/* Вторая строка: «& ДАРЬЯ»; амперсанд легче, как в макете */
+.heroNameLine2 {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.28em;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+
+.heroAmp {
+  font-weight: 300;
+  opacity: 0.82;
+  letter-spacing: 0.04em;
+}
+
+.heroDate {
+  margin: 0;
+  font-family: var(--font-hero-date, var(--font-geist)), system-ui, sans-serif;
+  font-size: clamp(0.8rem, 2.5vw, 1.05rem);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  letter-spacing: 0.22em;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0.98;
+}
+
+.section {
+  margin-bottom: 56px;
+  text-align: center;
+}
+
+/*
+ * Переход между блоками: тонкие горизонтали по бокам + сердце по центру
+ * (кроме первой секции внутри .page).
+ */
+.page > section:not(:first-of-type)::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: clamp(36px, 8vw, 48px);
+  margin-bottom: 6px;
+  background-repeat: no-repeat;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23a85f70' fill-opacity='0.72' d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E"),
+    linear-gradient(
+      90deg,
+      rgba(74, 55, 48, 0.14) 0%,
+      rgba(74, 55, 48, 0.14) 31%,
+      transparent 31%,
+      transparent 69%,
+      rgba(74, 55, 48, 0.14) 69%,
+      rgba(74, 55, 48, 0.14) 100%
+    );
+  background-size:
+    clamp(22px, 6vw, 28px) auto,
+    100% 1px;
+  background-position:
+    center 50%,
+    center 50%;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .page > section:not(:first-of-type)::before {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23904a5c' d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E"),
+      linear-gradient(
+        90deg,
+        rgba(74, 55, 48, 0.2) 0%,
+        rgba(74, 55, 48, 0.2) 31%,
+        transparent 31%,
+        transparent 69%,
+        rgba(74, 55, 48, 0.2) 69%,
+        rgba(74, 55, 48, 0.2) 100%
+      );
+  }
+}
+
+/* Вертикальная линия как в референсе — только над первой секцией */
+.page > section:first-of-type .sectionTitle::before {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 28px;
+  margin: 0 auto 18px;
+  background: #1a1a1a;
+}
+
+.sectionTitle {
+  margin-bottom: 20px !important;
+  margin-top: 0 !important;
+  font-family: var(--font-wedding-display), 'Cormorant Garamond', Georgia, serif !important;
+  font-weight: 500 !important;
+  font-size: clamp(1.1rem, 3.2vw, 1.45rem) !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  color: #1a1a1a !important;
+}
+
+.intro {
+  font-size: 1.02rem;
+  line-height: 1.8;
+  color: #4a4a4a;
+  max-width: 36em;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.sectionCalendar {
+  text-align: left;
+}
+
+.calendarWrap {
+  background: #faf6f0;
+  border: 1px solid #ebe2d9;
+  border-radius: 28px;
+  padding: 22px 20px 26px;
+  box-shadow: 0 4px 28px rgba(74, 55, 40, 0.07);
+}
+
+.calendarHeader {
+  font-family: var(--font-wedding-body), system-ui, sans-serif;
+  text-align: center;
+  font-weight: 500;
+  font-size: 1.08rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: #5c4a42;
+  margin-bottom: 14px;
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #a09084;
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  color: #4a3728;
+  background: #fff;
+  border: 1px solid #f0e8e0;
+  user-select: none;
+}
+
+.cellPad {
+  color: transparent;
+  border-color: #f0e8e0;
+  background: #fff;
+}
+
+.cellDay {
+  font-weight: 400;
+}
+
+.cellDayMark {
+  position: relative;
+  z-index: 0;
+}
+
+.cellWedding {
+  background: linear-gradient(165deg, #fff 0%, #fff8fa 52%, #ffeff4 100%);
+  border-color: transparent;
+  color: #4a2c32;
+  position: relative;
+  overflow: visible;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset;
+}
+
+/* Сердце-обводка: не участвует в flex, цифра остаётся по центру как в соседних ячейках */
+.cellWeddingHeartStroke {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 112%;
+  height: 112%;
+  max-width: none;
+  max-height: none;
+  color: #d9486e;
+  pointer-events: none;
+  z-index: 0;
+  filter: drop-shadow(0 0 0.5px rgba(255, 255, 255, 0.95));
+}
+
+.cellWedding .cellDayMark {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  color: #3d2529;
+}
+
+.venueCard {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 0;
+  padding: 28px 22px;
+  box-shadow: none;
+  text-align: center;
+}
+
+.venueYandexMap {
+  display: block;
+  width: 100%;
+  height: 320px;
+  margin-top: 22px;
+  border: 0;
+  background: #e8e8e8;
+}
+
+@media (min-width: 600px) {
+  .venueYandexMap {
+    height: 400px;
+  }
+}
+
+.sectionTiming {
+  text-align: center;
+}
+
+.timingPanel {
+  position: relative;
+  margin: 8px auto 0;
+  max-width: 420px;
+  padding: clamp(36px, 8vw, 56px) 28px clamp(40px, 9vw, 64px);
+  background: #fff;
+  border: 1px solid #ececec;
+  overflow: hidden;
+}
+
+.timingArc {
+  position: absolute;
+  left: -6%;
+  bottom: -4%;
+  width: 88%;
+  max-width: 380px;
+  height: auto;
+  aspect-ratio: 420 / 520;
+  color: #6b2d3c;
+  opacity: 0.88;
+  pointer-events: none;
+}
+
+.timingList {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(28px, 6vw, 44px);
+}
+
+.timingRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35em;
+  text-align: center;
+}
+
+.timingTime {
+  display: block;
+  font-family: var(--font-wedding-display), 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(2.35rem, 8vw, 3.15rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: #0f0f0f;
+}
+
+.timingLabel {
+  display: block;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.78rem, 2.1vw, 0.88rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: #3a3a3a;
+}
+
+.timingLabel::first-letter {
+  text-transform: uppercase;
+}
+
+.overnight {
+  padding: 20px 22px;
+  border-radius: 0;
+  background: #fafafa;
+  border: 1px solid #eaeaea;
+  color: #4a4a4a;
+  line-height: 1.75;
+  text-align: center;
+}
+
+.sectionDressCode {
+  text-align: center;
+}
+
+/* Тонкая линия под заголовком, как на макете */
+.sectionDressCode .sectionTitle::after {
+  content: '';
+  display: block;
+  width: min(104px, 28vw);
+  height: 1px;
+  margin: 16px auto 0;
+  background: #1f1f1f;
+}
+
+.dressCodeIntro {
+  margin: 22px auto 0 !important;
+  max-width: 36em;
+  font-weight: 300 !important;
+  font-size: clamp(0.94rem, 2.4vw, 1.02rem) !important;
+  line-height: 1.78 !important;
+  color: #555 !important;
+}
+
+.dressCodePalette {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(10px, 3.2vw, 26px);
+  margin: 28px auto 6px;
+  padding: 4px 8px 8px;
+  max-width: 400px;
+}
+
+.dressCodeSwatch {
+  flex: 0 0 auto;
+  width: clamp(38px, 11vw, 52px);
+  height: clamp(86px, 22vw, 118px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-38deg);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.06));
+}
+
+.dressCodeSwatch:nth-child(2) {
+  transform: rotate(-44deg) translateY(4px);
+}
+
+.dressCodeSwatch:nth-child(3) {
+  transform: rotate(-36deg) translateY(-2px);
+}
+
+.dressCodeSwatch:nth-child(4) {
+  transform: rotate(-41deg) translateY(3px);
+}
+
+.dressCodeSwatchSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Светлый мазок читается на белом фоне */
+.dressCodeSwatch:nth-child(3) .dressCodeSwatchSvg path {
+  filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.12));
+}
+
+.dressCodePaletteNote {
+  margin: 18px auto 0 !important;
+  max-width: 32em;
+  font-size: 0.88rem !important;
+  font-weight: 300 !important;
+  line-height: 1.65 !important;
+  color: #7a7a7a !important;
+}
+
+.wishesCarouselWrap {
+  border: 1px solid #e8e8e8;
+  border-radius: 0;
+}
+
+/* Рамка на обёртке, не overflow:hidden на .slick-slider (иначе чаще «теряется» .slick-prev/.slick-next) */
+
+.wishesCarousel {
+  border-radius: 0;
+}
+
+/* Тема Ant: у стрелок color:#fff, opacity:0.4 — на белом не видны; важен приоритет над [class*="ant-carousel"] */
+.wishesCarousel :global(.slick-arrow) {
+  color: #3d3834 !important;
+  opacity: 0.85 !important;
+  z-index: 3;
+}
+
+.wishesCarousel :global(.slick-arrow:hover),
+.wishesCarousel :global(.slick-arrow:focus-visible) {
+  opacity: 1 !important;
+}
+
+.wishesCarousel :global(.slick-arrow.slick-disabled) {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.wishSlide {
+  min-height: 200px;
+  padding: 32px 24px 40px;
+  background: #fff;
+  text-align: center;
+}
+
+.formSection {
+  margin-top: 8px;
+}
+
+.formSection .formCard {
+  text-align: left;
+}
+
+.formCard {
+  box-shadow: none !important;
+  border: 1px solid #e8e8e8 !important;
+  border-radius: 0 !important;
+}
+
+/* Выбор присутствия: широкий сегмент в палитре дедлайна */
+.plansToAttendFormItem {
+  margin-bottom: 26px;
+}
+
+.plansToAttendGroup {
+  display: flex !important;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+}
+
+.plansToAttendGroup :global(.ant-radio-button-wrapper) {
+  flex: 1 1 50%;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  height: auto !important;
+  min-height: 50px;
+  line-height: 1.35 !important;
+  padding: 13px 16px !important;
+  margin: 0 !important;
+  text-align: center;
+  font-size: 0.94rem !important;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  border-radius: 0 !important;
+  border-color: #cfc8c0 !important;
+  background: #f6f4f1 !important;
+  color: #3d3834 !important;
+  transition:
+    background 0.22s ease,
+    color 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.plansToAttendGroup :global(.ant-radio-button-wrapper::before) {
+  display: none !important;
+}
+
+.plansToAttendGroup :global(.ant-radio-button-wrapper:not(:first-child)) {
+  margin-inline-start: -1px !important;
+}
+
+.plansToAttendGroup :global(.ant-radio-button-wrapper:hover) {
+  color: #1f1c1a !important;
+  background: #efede9 !important;
+}
+
+.plansToAttendGroup :global(.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled)) {
+  z-index: 1;
+  background: #6b2d3c !important;
+  border-color: #5c2633 !important;
+  color: #fdfaf8 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.plansToAttendGroup :global(.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover) {
+  background: #5c2633 !important;
+  border-color: #4e2029 !important;
+  color: #fff !important;
+}
+
+.plansToAttendGroup :global(.ant-radio-button-wrapper:focus-visible) {
+  outline: 2px solid rgba(107, 45, 60, 0.45);
+  outline-offset: 2px;
+}
+
+.submitFormItem {
+  margin-top: 10px;
+  margin-bottom: 0 !important;
+}
+
+.formSubmitButton {
+  height: auto !important;
+  min-height: 54px;
+  padding: 16px 28px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-weight: 500 !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  color: #fdfaf8 !important;
+  background: linear-gradient(180deg, #7a3a49 0%, #6b2d3c 48%, #5a2632 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 3px 16px rgba(70, 28, 38, 0.28) !important;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.formSubmitButton:hover,
+.formSubmitButton:focus {
+  color: #fff !important;
+  background: linear-gradient(180deg, #864252 0%, #753241 55%, #632c38 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 4px 22px rgba(70, 28, 38, 0.34) !important;
+}
+
+.formSubmitButton:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.12),
+    0 2px 10px rgba(70, 28, 38, 0.22) !important;
+}
+
+.deadlineNote {
+  margin-bottom: 16px;
+  color: #6b2d3c;
+  font-weight: 500;
+  text-align: center;
+}
+
+.videoSection {
+  position: relative;
+  z-index: 1;
+  margin-top: 56px;
+  text-align: center;
+}
+
+.videoWrap {
+  position: relative;
+  margin-top: 0;
+  overflow: hidden;
+  background: #0a0a0a;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Текст поверх видео: лёгкая «мутность» + градиенты под контраст на любом кадре */
+.videoOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  text-align: center;
+  color: #0c0c0c;
+  isolation: isolate;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 20px max(88px, calc(12px + env(safe-area-inset-bottom, 0px)));
+}
+
+.videoOverlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(252, 249, 245, 0.94) 0%, rgba(252, 249, 245, 0.72) 16%, rgba(252, 249, 245, 0.22) 34%, transparent 48%),
+    radial-gradient(ellipse 115% 78% at 50% 48%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(18, 16, 14, 0.18) 100%);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .videoOverlay::before {
+    background:
+      linear-gradient(180deg, rgba(252, 249, 245, 0.88) 0%, rgba(252, 249, 245, 0.55) 18%, rgba(252, 249, 245, 0.12) 38%, transparent 52%),
+      radial-gradient(ellipse 115% 78% at 50% 48%, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.42) 50%, rgba(18, 16, 14, 0.22) 100%);
+    backdrop-filter: blur(10px) saturate(1.05);
+    -webkit-backdrop-filter: blur(10px) saturate(1.05);
+  }
+}
+
+.videoOverlayHeader {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.videoOverlayTop {
+  margin: 0;
+  font-family: var(--font-wedding-body), system-ui, sans-serif;
+  font-size: clamp(0.92rem, 2.9vw, 1.08rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #141414;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 1),
+    0 0 14px rgba(255, 255, 255, 0.95),
+    0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.videoOverlayRule {
+  width: min(34%, 200px);
+  height: 2px;
+  margin: 12px auto 0;
+  background: rgba(12, 12, 12, 0.72);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.videoOverlayMain {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15em;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.videoOverlayWithLove {
+  margin: 0 0 0.35em;
+  font-family: var(--font-wedding-display), 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.82rem, 2.4vw, 1rem);
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #080808;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 1),
+    0 0 16px rgba(255, 255, 255, 0.9),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.videoOverlayNameLarge {
+  margin: 0;
+  font-family: var(--font-wedding-display), 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(2.35rem, 11vw, 4rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  color: #050505;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 1),
+    0 0 18px rgba(255, 255, 255, 0.92),
+    0 0 36px rgba(255, 255, 255, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.22);
+}
+
+.videoOverlayConj {
+  margin: 0.2em 0;
+  font-family: var(--font-wedding-display), 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(0.95rem, 2.8vw, 1.15rem);
+  font-weight: 500;
+  line-height: 1;
+  color: #0a0a0a;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 1),
+    0 0 14px rgba(255, 255, 255, 0.88),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.video {
+  width: 100%;
+  display: block;
+  max-height: 70vh;
+}
+
+@media (max-width: 767px) {
+  .page {
+    max-width: calc(100% - 20px);
+    padding: 28px 16px 28px;
+    border-radius: 22px;
+  }
+
+  /* Видео вне .page — на всю ширину корня лендинга */
+  .videoSection {
+    width: 100%;
+    max-width: none;
+    margin-top: 40px;
+    margin-left: 0;
+  }
+
+  .videoWrap {
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: none;
+    width: 100%;
+    height: min(100dvh, 100svh);
+    max-height: min(100dvh, 100svh);
+  }
+
+  .video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+  }
+}
