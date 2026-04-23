@@ -21,6 +21,7 @@ ENV NEXT_PUBLIC_DEFAULT_LANGUAGE=$NEXT_PUBLIC_DEFAULT_LANGUAGE
 
 ENV NODE_ENV=production
 RUN npm run build
+RUN npx tsc && npx tsc-alias --resolve-full-paths
 
 FROM node:25-alpine AS app
 WORKDIR /app
