@@ -989,4 +989,59 @@
     max-height: none;
     object-fit: cover;
   }
+
+  /*
+   * Мобильный полноэкранный блок: баланс — не перекрыть кадр как в первой версии,
+   * но дать заметный светлый слой под тёмным текстом (центр + края).
+   */
+  .videoOverlay::before {
+    background:
+      linear-gradient(180deg, rgba(252, 249, 245, 0.78) 0%, rgba(252, 249, 245, 0.32) 24%, rgba(252, 249, 245, 0.1) 46%, transparent 62%),
+      linear-gradient(0deg, rgba(12, 10, 8, 0.45) 0%, transparent 42%),
+      radial-gradient(ellipse 125% 88% at 50% 50%, rgba(255, 252, 248, 0.42) 0%, rgba(255, 252, 248, 0.14) 52%, transparent 78%);
+  }
+
+  @supports (backdrop-filter: blur(1px)) {
+    .videoOverlay::before {
+      background:
+        linear-gradient(180deg, rgba(252, 249, 245, 0.68) 0%, rgba(252, 249, 245, 0.26) 26%, rgba(252, 249, 245, 0.08) 48%, transparent 64%),
+        linear-gradient(0deg, rgba(8, 7, 6, 0.38) 0%, transparent 44%),
+        radial-gradient(ellipse 125% 88% at 50% 50%, rgba(255, 252, 248, 0.34) 0%, rgba(255, 252, 248, 0.1) 54%, transparent 80%);
+      backdrop-filter: blur(7px) saturate(1.04);
+      -webkit-backdrop-filter: blur(7px) saturate(1.04);
+    }
+  }
+
+  .videoOverlayTop {
+    text-shadow:
+      0 0 1px rgba(255, 255, 255, 1),
+      0 0 14px rgba(255, 255, 255, 0.96),
+      0 1px 3px rgba(0, 0, 0, 0.42),
+      0 2px 14px rgba(0, 0, 0, 0.22);
+  }
+
+  .videoOverlayWithLove {
+    text-shadow:
+      0 0 1px rgba(255, 255, 255, 1),
+      0 0 16px rgba(255, 255, 255, 0.92),
+      0 1px 4px rgba(0, 0, 0, 0.4),
+      0 2px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .videoOverlayNameLarge {
+    text-shadow:
+      0 0 1px rgba(255, 255, 255, 1),
+      0 0 18px rgba(255, 255, 255, 0.94),
+      0 0 36px rgba(255, 255, 255, 0.55),
+      0 2px 8px rgba(0, 0, 0, 0.38),
+      0 4px 22px rgba(0, 0, 0, 0.22);
+  }
+
+  .videoOverlayConj {
+    text-shadow:
+      0 0 1px rgba(255, 255, 255, 1),
+      0 0 14px rgba(255, 255, 255, 0.9),
+      0 1px 4px rgba(0, 0, 0, 0.38),
+      0 2px 14px rgba(0, 0, 0, 0.2);
+  }
 }
