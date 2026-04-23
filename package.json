@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/server.ts",
     "build": "next build && node scripts/tsc-server-build.mjs",
-    "start": "cross-env NODE_ENV=production node dist/server/server.js",
+    "start": "cross-env NODE_ENV=production node server/server.js",
     "dev-prod": "cross-env DB='LOCAL' NODE_ENV=production tsx server/server.ts",
     "start:server:prod": "cross-env DB='HOST' NODE_ENV=production node server/server.js",
     "start:server:docker:dev": "cross-env DB='LOCAL' IS_DOCKER='TRUE' NODE_ENV=production node server/server.js",
@@ -14,7 +14,7 @@
     "migration:create": "typeorm migration:create",
     "migration:create:name": "tsx server/db/migrations/helpers/create-migration.helper.ts",
     "migration:run": "cross-env NODE_ENV=development tsx ./node_modules/typeorm/cli.js migration:run -d server/db/data-source.ts",
-    "migration:run:prod": "cross-env NODE_ENV=production node ./node_modules/typeorm/cli.js migration:run -d dist/server/db/data-source.js",
+    "migration:run:prod": "cross-env NODE_ENV=production node ./node_modules/typeorm/cli.js migration:run -d server/db/data-source.js",
     "migration:revert": "cross-env NODE_ENV=development tsx ./node_modules/typeorm/cli.js migration:revert -d server/db/data-source.ts"
   },
   "dependencies": {
