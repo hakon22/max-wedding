@@ -253,7 +253,6 @@ const MenuKindSection = ({
       title={`${title} (${localItems.length})`}
       loading={loading}
       className={styles.sectionCard}
-      extra={<Text type="secondary">Перетаскивайте за иконку</Text>}
     >
       <Space direction="vertical" size={10} style={{ width: '100%' }}>
         <Space.Compact block>

@@ -140,12 +140,17 @@ export class TelegramWeddingBotCommandsService extends BaseService {
             '📱 <b>Mini App редактор меню</b>',
             '',
             'Нажмите кнопку ниже — она откроет приложение в режиме WebApp.',
+            '',
+            'Важно: не открывайте Mini App тапом по обычной ссылке, используйте именно кнопку.',
           ].join('\n'),
           {
             parse_mode: 'HTML',
-            ...Markup.keyboard([[Markup.button.webApp('📱 Открыть Mini App', miniAppUrl)]])
-              .resize()
-              .oneTime(),
+            reply_markup: {
+              keyboard: [[{ text: '📱 Открыть Mini App', web_app: { url: miniAppUrl } }]],
+              resize_keyboard: true,
+              one_time_keyboard: false,
+              is_persistent: true,
+            },
           },
         );
       } catch (error) {
