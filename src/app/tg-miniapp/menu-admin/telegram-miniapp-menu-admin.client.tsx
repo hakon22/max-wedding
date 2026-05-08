@@ -128,7 +128,7 @@ const SortableMenuItemRow = ({
       className={`${styles.itemCard} ${isDragging ? styles.itemCardDragging : ''}`}
       size="small"
     >
-      <Flex align="center" gap={8}>
+      <Flex align="center" gap={8} wrap className={styles.itemRow}>
         <Button
           icon={<HolderOutlined />}
           type="text"
@@ -141,7 +141,7 @@ const SortableMenuItemRow = ({
         </Tag>
         <div className={styles.itemMain}>
           {isEditing ? (
-            <Space.Compact block>
+            <Space.Compact block className={styles.itemEditCompact}>
               <Input
                 value={labelDraft}
                 onChange={(event) => setLabelDraft(event.target.value)}
@@ -166,42 +166,44 @@ const SortableMenuItemRow = ({
             </Space>
           )}
         </div>
-        <Switch
-          checked={item.isActive}
-          disabled={busy}
-          checkedChildren="ON"
-          unCheckedChildren="OFF"
-          onChange={async (checked) => {
-            await onToggle(item.id, checked);
-          }}
-        />
-        {!isEditing ? (
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => {
-              setLabelDraft(item.labelRu);
-              setIsEditing(true);
+        <Space size={8} wrap className={styles.itemActions}>
+          <Switch
+            checked={item.isActive}
+            disabled={busy}
+            checkedChildren="ON"
+            unCheckedChildren="OFF"
+            onChange={async (checked) => {
+              await onToggle(item.id, checked);
+            }}
+          />
+          {!isEditing ? (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => {
+                setLabelDraft(item.labelRu);
+                setIsEditing(true);
+              }}
+              disabled={busy}
+              aria-label={`Редактировать ${item.labelRu}`}
+            />
+          ) : (
+            <Button onClick={() => setIsEditing(false)} disabled={busy}>
+              Отмена
+            </Button>
+          )}
+          <Popconfirm
+            title="Удалить позицию?"
+            description={item.labelRu}
+            okText="Удалить"
+            cancelText="Отмена"
+            onConfirm={async () => {
+              await onDelete(item.id);
             }}
             disabled={busy}
-            aria-label={`Редактировать ${item.labelRu}`}
-          />
-        ) : (
-          <Button onClick={() => setIsEditing(false)} disabled={busy}>
-            Отмена
-          </Button>
-        )}
-        <Popconfirm
-          title="Удалить позицию?"
-          description={item.labelRu}
-          okText="Удалить"
-          cancelText="Отмена"
-          onConfirm={async () => {
-            await onDelete(item.id);
-          }}
-          disabled={busy}
-        >
-          <Button danger icon={<DeleteOutlined />} disabled={busy} />
-        </Popconfirm>
+          >
+            <Button danger icon={<DeleteOutlined />} disabled={busy} />
+          </Popconfirm>
+        </Space>
       </Flex>
     </Card>
   );

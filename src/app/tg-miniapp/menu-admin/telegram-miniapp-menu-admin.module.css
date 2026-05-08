@@ -22,7 +22,15 @@
 
 .itemMain {
   flex: 1;
-  min-width: 0;
+  min-width: 240px;
+}
+
+.itemRow {
+  width: 100%;
+}
+
+.itemActions {
+  margin-left: auto;
 }
 
 .orderTag {
@@ -34,5 +42,21 @@
 @media (max-width: 768px) {
   .page {
     padding: 8px;
+  }
+
+  .itemMain {
+    min-width: 100%;
+    order: 3;
+  }
+
+  .itemActions {
+    margin-left: 0;
+    order: 2;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .itemEditCompact {
+    width: 100%;
   }
 }
