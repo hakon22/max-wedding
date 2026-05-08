@@ -123,7 +123,8 @@ type MenuKindSectionProps = {
   kind: MenuItemKind;
   title: string;
   items: MenuItemDto[];
-  loading: boolean;
+  sectionLoading: boolean;
+  busy: boolean;
   onReorder: (kind: MenuItemKind, items: MenuItemDto[]) => Promise<void>;
   onRename: (kind: MenuItemKind, id: number, labelRu: string) => Promise<void>;
   onToggle: (kind: MenuItemKind, id: number, isActive: boolean) => Promise<void>;
@@ -247,7 +248,8 @@ const MenuKindSection = ({
   kind,
   title,
   items,
-  loading,
+  sectionLoading,
+  busy,
   onReorder,
   onRename,
   onToggle,
@@ -285,7 +287,7 @@ const MenuKindSection = ({
   return (
     <Card
       title={`${title} (${localItems.length})`}
-      loading={loading}
+      loading={sectionLoading}
       className={styles.sectionCard}
     >
       <Space direction="vertical" size={10} style={{ width: '100%' }}>
@@ -294,18 +296,18 @@ const MenuKindSection = ({
             value={newLabel}
             onChange={(event) => setNewLabel(event.target.value)}
             placeholder="Новое название"
-            disabled={loading}
+            disabled={busy}
           />
           <InputNumber
             min={0}
             max={Math.max(0, localItems.length)}
             value={newOrder}
             onChange={(value) => setNewOrder(value ?? 0)}
-            disabled={loading}
+            disabled={busy}
           />
           <Button
             type="primary"
-            disabled={loading || newLabel.trim().length < 2}
+            disabled={busy || newLabel.trim().length < 2}
             onClick={async () => {
               await onCreate(kind, newLabel.trim(), newOrder);
               setNewLabel('');
@@ -323,7 +325,7 @@ const MenuKindSection = ({
                 <SortableMenuItemRow
                   key={item.id}
                   item={item}
-                  busy={loading}
+                  busy={busy}
                   onRename={async (id, labelRu) => onRename(kind, id, labelRu)}
                   onToggle={async (id, isActive) => onToggle(kind, id, isActive)}
                   onDelete={async (id) => onDelete(kind, id)}
@@ -342,7 +344,8 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
   const [messageApi, contextHolder] = message.useMessage();
   const [token, setToken] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<MenuCatalogDto>({ mainCourses: [], drinks: [] });
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<MiniAppDebugInfo | null>(null);
 
@@ -361,6 +364,39 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
     setCatalog({ mainCourses: data.mainCourses, drinks: data.drinks });
   }, [authHeaders]);
 
+  const setKindItems = useCallback((kind: MenuItemKind, items: MenuItemDto[]): void => {
+    const normalized = [...items].sort((left, right) => left.order - right.order || left.id - right.id);
+    setCatalog((prev) =>
+      kind === 'mainCourse'
+        ? { ...prev, mainCourses: normalized }
+        : { ...prev, drinks: normalized },
+    );
+  }, []);
+
+  const upsertKindItem = useCallback((kind: MenuItemKind, item: MenuItemDto): void => {
+    setCatalog((prev) => {
+      const source = kind === 'mainCourse' ? prev.mainCourses : prev.drinks;
+      const exists = source.some((row) => row.id === item.id);
+      const updated = (exists ? source.map((row) => (row.id === item.id ? item : row)) : [...source, item])
+        .sort((left, right) => left.order - right.order || left.id - right.id);
+      return kind === 'mainCourse'
+        ? { ...prev, mainCourses: updated }
+        : { ...prev, drinks: updated };
+    });
+  }, []);
+
+  const removeKindItem = useCallback((kind: MenuItemKind, id: number): void => {
+    setCatalog((prev) => {
+      const source = kind === 'mainCourse' ? prev.mainCourses : prev.drinks;
+      const updated = source
+        .filter((row) => row.id !== id)
+        .map((row, index) => ({ ...row, order: index }));
+      return kind === 'mainCourse'
+        ? { ...prev, mainCourses: updated }
+        : { ...prev, drinks: updated };
+    });
+  }, []);
+
   useEffect(() => {
     const run = async (): Promise<void> => {
       const { initData, debug } = await resolveTelegramInitData();
@@ -370,7 +406,7 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
         setBootError('Mini App должен быть открыт через WebApp-кнопку Telegram (/miniapp).');
         return;
       }
-      setLoading(true);
+      setInitialLoading(true);
       try {
         const authResponse = await apiClient.post<{
           ok: boolean;
@@ -404,7 +440,7 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
         });
         setBootError(fallback);
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     };
     void run();
@@ -414,7 +450,7 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
     if (!token) {
       return;
     }
-    setLoading(true);
+    setInitialLoading(true);
     loadCatalog()
       .catch((error) => {
         const fallback = 'Не удалось загрузить каталог';
@@ -425,11 +461,11 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
         }
         setBootError(fallback);
       })
-      .finally(() => setLoading(false));
+      .finally(() => setInitialLoading(false));
   }, [loadCatalog, token]);
 
   const withBusyState = async (fn: () => Promise<void>): Promise<void> => {
-    setLoading(true);
+    setActionBusy(true);
     try {
       await fn();
     } catch (error) {
@@ -441,7 +477,7 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
         messageApi.error(fallback);
       }
     } finally {
-      setLoading(false);
+      setActionBusy(false);
     }
   };
 
@@ -475,45 +511,46 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
   return (
     <main className={styles.page}>
       {contextHolder}
-      <Card title="Telegram Mini App: редактор меню" className={styles.mainCard} loading={loading && !token}>
+      <Card title="Telegram Mini App: редактор меню" className={styles.mainCard} loading={initialLoading && !token}>
         <Space direction="vertical" size={12} style={{ width: '100%' }}>
           <Text type="secondary">
-            Изменения применяются сразу. Если не получается перетащить карточку, потяните за иконку слева.
+            Изменения применяются сразу. Что бы изменить порядок, нужно перетащить карточку, потянув за иконку слева.
           </Text>
 
           <MenuKindSection
             kind="mainCourse"
             title="Основные блюда"
             items={catalog.mainCourses}
-            loading={loading}
+            sectionLoading={initialLoading}
+            busy={actionBusy}
             onReorder={async (kind, items) =>
               withBusyState(async () => {
-                await apiClient.post(
+                const { data } = await apiClient.post<{ ok: boolean; items: MenuItemDto[] }>(
                   '/api/telegram-miniapp/menu/reorder',
                   { kind, orderedIds: items.map((item) => item.id) },
                   { headers: authHeaders },
                 );
-                await loadCatalog();
+                setKindItems(kind, data.items);
                 messageApi.success('Порядок обновлён');
               })}
             onRename={async (kind, id, labelRu) =>
               withBusyState(async () => {
-                await apiClient.patch(
+                const { data } = await apiClient.patch<{ ok: boolean; item: MenuItemDto }>(
                   `/api/telegram-miniapp/menu/items/${id}`,
                   { kind, labelRu },
                   { headers: authHeaders },
                 );
-                await loadCatalog();
+                upsertKindItem(kind, data.item);
                 messageApi.success('Название обновлено');
               })}
             onToggle={async (kind, id, isActive) =>
               withBusyState(async () => {
-                await apiClient.patch(
+                const { data } = await apiClient.patch<{ ok: boolean; item: MenuItemDto }>(
                   `/api/telegram-miniapp/menu/items/${id}`,
                   { kind, isActive },
                   { headers: authHeaders },
                 );
-                await loadCatalog();
+                upsertKindItem(kind, data.item);
               })}
             onDelete={async (kind, id) =>
               withBusyState(async () => {
@@ -521,17 +558,17 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
                   params: { kind },
                   headers: authHeaders,
                 });
-                await loadCatalog();
+                removeKindItem(kind, id);
                 messageApi.success('Позиция удалена');
               })}
             onCreate={async (kind, labelRu, order) =>
               withBusyState(async () => {
-                await apiClient.post(
+                const { data } = await apiClient.post<{ ok: boolean; item: MenuItemDto }>(
                   '/api/telegram-miniapp/menu/items',
                   { kind, labelRu, order },
                   { headers: authHeaders },
                 );
-                await loadCatalog();
+                upsertKindItem(kind, data.item);
                 messageApi.success('Позиция добавлена');
               })}
           />
@@ -540,35 +577,36 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
             kind="drink"
             title="Напитки"
             items={catalog.drinks}
-            loading={loading}
+            sectionLoading={initialLoading}
+            busy={actionBusy}
             onReorder={async (kind, items) =>
               withBusyState(async () => {
-                await apiClient.post(
+                const { data } = await apiClient.post<{ ok: boolean; items: MenuItemDto[] }>(
                   '/api/telegram-miniapp/menu/reorder',
                   { kind, orderedIds: items.map((item) => item.id) },
                   { headers: authHeaders },
                 );
-                await loadCatalog();
+                setKindItems(kind, data.items);
                 messageApi.success('Порядок обновлён');
               })}
             onRename={async (kind, id, labelRu) =>
               withBusyState(async () => {
-                await apiClient.patch(
+                const { data } = await apiClient.patch<{ ok: boolean; item: MenuItemDto }>(
                   `/api/telegram-miniapp/menu/items/${id}`,
                   { kind, labelRu },
                   { headers: authHeaders },
                 );
-                await loadCatalog();
+                upsertKindItem(kind, data.item);
                 messageApi.success('Название обновлено');
               })}
             onToggle={async (kind, id, isActive) =>
               withBusyState(async () => {
-                await apiClient.patch(
+                const { data } = await apiClient.patch<{ ok: boolean; item: MenuItemDto }>(
                   `/api/telegram-miniapp/menu/items/${id}`,
                   { kind, isActive },
                   { headers: authHeaders },
                 );
-                await loadCatalog();
+                upsertKindItem(kind, data.item);
               })}
             onDelete={async (kind, id) =>
               withBusyState(async () => {
@@ -576,17 +614,17 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
                   params: { kind },
                   headers: authHeaders,
                 });
-                await loadCatalog();
+                removeKindItem(kind, id);
                 messageApi.success('Позиция удалена');
               })}
             onCreate={async (kind, labelRu, order) =>
               withBusyState(async () => {
-                await apiClient.post(
+                const { data } = await apiClient.post<{ ok: boolean; item: MenuItemDto }>(
                   '/api/telegram-miniapp/menu/items',
                   { kind, labelRu, order },
                   { headers: authHeaders },
                 );
-                await loadCatalog();
+                upsertKindItem(kind, data.item);
                 messageApi.success('Позиция добавлена');
               })}
           />
