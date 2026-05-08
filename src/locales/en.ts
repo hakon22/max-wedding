@@ -59,9 +59,9 @@ const enResources = {
       ],
       dressCode: {
         intro:
-          'Below is a suggested colour mood for your outfit: the brush shapes suggest the tones we would love guests to echo — not literal paint or a strict Pantone match. Choose similar shades in a dress, a suit, a jacket, or accessories in whatever way feels comfortable for you. We plan to add full outfit examples for men and women as separate photos later.',
+          'We are eagerly waiting and preparing for our unforgettable day! Please support us with your smiles and warm hugs, and with beautiful outfits in the event color palette.',
         paletteNote:
-          'Main tones are warm natural and accent shades; readability and your comfort matter most.',
+          'The key shades of our wedding palette.',
       },
       wishesSlides: [
         {

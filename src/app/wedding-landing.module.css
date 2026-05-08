@@ -522,58 +522,77 @@
   background: #1f1f1f;
 }
 
+.dressCodeHero {
+  position: relative;
+  margin: 22px auto 0;
+  width: min(760px, 100%);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(31, 31, 31, 0.14);
+}
+
+.dressCodeHeroImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .dressCodeIntro {
-  margin: 22px auto 0 !important;
-  max-width: 36em;
+  position: absolute;
+  left: 50%;
+  bottom: clamp(14px, 5vw, 40px);
+  transform: translateX(-50%);
+  margin: 0 !important;
+  width: min(86%, 640px);
+  padding: clamp(10px, 2.8vw, 20px) clamp(12px, 3.8vw, 30px);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(1px);
   font-weight: 300 !important;
-  font-size: clamp(0.94rem, 2.4vw, 1.02rem) !important;
-  line-height: 1.78 !important;
-  color: #555 !important;
+  font-size: clamp(0.9rem, 2.35vw, 1.03rem) !important;
+  line-height: 1.66 !important;
+  color: #2b3e33 !important;
+  text-wrap: balance;
 }
 
 .dressCodePalette {
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   justify-content: center;
-  align-items: center;
-  gap: clamp(10px, 3.2vw, 26px);
-  margin: 28px auto 6px;
-  padding: 4px 8px 8px;
-  max-width: 400px;
+  gap: clamp(10px, 2.2vw, 16px);
+  margin: 20px auto 6px;
+  width: min(760px, 100%);
+  opacity: 0;
+  transform: translateY(14px) scale(0.985);
+  transition: opacity 520ms ease, transform 520ms ease;
 }
 
-.dressCodeSwatch {
-  flex: 0 0 auto;
-  width: clamp(38px, 11vw, 52px);
-  height: clamp(86px, 22vw, 118px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(-38deg);
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.06));
+.dressCodePaletteVisible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
-.dressCodeSwatch:nth-child(2) {
-  transform: rotate(-44deg) translateY(4px);
+.dressCodeHero:hover + .dressCodePalette,
+.dressCodePaletteHovered {
+  transform: translateY(0) scale(1.015);
 }
 
-.dressCodeSwatch:nth-child(3) {
-  transform: rotate(-36deg) translateY(-2px);
+.dressCodePaletteItem {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 3px 14px rgba(30, 30, 30, 0.14);
 }
 
-.dressCodeSwatch:nth-child(4) {
-  transform: rotate(-41deg) translateY(3px);
-}
-
-.dressCodeSwatchSvg {
+.dressCodePaletteImage {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
 }
 
-/* Светлый мазок читается на белом фоне */
-.dressCodeSwatch:nth-child(3) .dressCodeSwatchSvg path {
-  filter: drop-shadow(0 0 0.5px rgba(0, 0, 0, 0.12));
+@media (max-width: 640px) {
+  .dressCodePalette {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .dressCodePaletteNote {

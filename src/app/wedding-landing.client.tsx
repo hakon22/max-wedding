@@ -1,7 +1,7 @@
 'use client';
 
 import type { CSSProperties, ReactNode } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { App, Button, Card, Carousel, Checkbox, Form, Input, Radio, Select, Typography, message } from 'antd';
 import { isAxiosError } from 'axios';
@@ -49,24 +49,11 @@ type CalendarCell = {
 const CALENDAR_WEDDING_HEART_PATH =
   'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
 
-/** viewBox 0 0 72 118 — наклонные «мазки» как на макете wedwed */
-const DRESS_CODE_SWATCHES = [
-  {
-    fill: '#7a8068',
-    d: 'M10 26 C26 8 52 12 60 34 L54 94 C46 110 14 102 8 82 C4 58 6 38 10 26 Z',
-  },
-  {
-    fill: '#c47662',
-    d: 'M14 10 C40 4 58 20 58 46 L50 104 C40 114 12 98 10 72 C8 48 10 22 14 10 Z',
-  },
-  {
-    fill: '#ebe3d6',
-    d: 'M8 22 C32 12 58 24 60 44 L56 96 C52 108 22 104 10 90 C4 72 4 40 8 22 Z',
-  },
-  {
-    fill: '#5c232e',
-    d: 'M12 16 C44 8 58 28 56 54 L48 106 C38 116 10 100 8 74 C6 50 8 28 12 16 Z',
-  },
+const DRESS_CODE_IMAGES = [
+  '/wedding/choko.png',
+  '/wedding/currant.png',
+  '/wedding/mitn.png',
+  '/wedding/raspberry.png',
 ] as const;
 
 const CalendarWeddingHeartOutline = (): ReactNode => (
@@ -241,6 +228,9 @@ const WeddingLandingClient = (): ReactNode => {
   const timingItems = t('weddingLanding.timing', { returnObjects: true }) as unknown as TimingItem[];
   const weddingVideoRef = useRef<HTMLVideoElement>(null);
   const videoSectionRef = useRef<HTMLElement>(null);
+  const dressCodeSectionRef = useRef<HTMLElement>(null);
+  const [isDressCodeVisible, setIsDressCodeVisible] = useState(false);
+  const [isDressCodeHovered, setIsDressCodeHovered] = useState(false);
 
   useEffect(() => {
     const video = weddingVideoRef.current;
@@ -260,6 +250,26 @@ const WeddingLandingClient = (): ReactNode => {
       { threshold: 0.42, rootMargin: '0px 0px -8% 0px' },
     );
     observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const section = dressCodeSectionRef.current;
+    if (!section) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsDressCodeVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.3, rootMargin: '0px 0px -10% 0px' },
+    );
+    observer.observe(section);
     return () => observer.disconnect();
   }, []);
 
@@ -417,23 +427,35 @@ const WeddingLandingClient = (): ReactNode => {
           </div>
         </section>
 
-        <section className={`${styles.section} ${styles.sectionDressCode}`}>
+        <section ref={dressCodeSectionRef} className={`${styles.section} ${styles.sectionDressCode}`}>
           <Title level={2} className={styles.sectionTitle}>
             {t('weddingLanding.sections.dressCode')}
           </Title>
-          <Paragraph className={styles.dressCodeIntro}>{t('weddingLanding.dressCode.intro')}</Paragraph>
-          <div className={styles.dressCodePalette} aria-hidden>
-            {DRESS_CODE_SWATCHES.map((swatch, swatchIndex) => (
-              <div key={swatchIndex} className={styles.dressCodeSwatch}>
-                <svg
-                  className={styles.dressCodeSwatchSvg}
-                  viewBox="0 0 72 118"
-                  width={72}
-                  height={118}
-                  preserveAspectRatio="xMidYMid meet"
-                >
-                  <path d={swatch.d} fill={swatch.fill} />
-                </svg>
+          <div
+            className={styles.dressCodeHero}
+            onMouseEnter={() => setIsDressCodeHovered(true)}
+            onMouseLeave={() => setIsDressCodeHovered(false)}
+          >
+            <Image
+              src="/wedding/dress-code.jpeg"
+              alt=""
+              aria-hidden
+              width={1600}
+              height={900}
+              className={styles.dressCodeHeroImage}
+              sizes="(max-width: 768px) 92vw, 760px"
+            />
+            <Paragraph className={styles.dressCodeIntro}>{t('weddingLanding.dressCode.intro')}</Paragraph>
+          </div>
+          <div
+            className={`${styles.dressCodePalette} ${isDressCodeVisible ? styles.dressCodePaletteVisible : ''} ${
+              isDressCodeHovered ? styles.dressCodePaletteHovered : ''
+            }`}
+            aria-hidden
+          >
+            {DRESS_CODE_IMAGES.map((imageSrc) => (
+              <div key={imageSrc} className={styles.dressCodePaletteItem}>
+                <Image src={imageSrc} alt="" width={210} height={210} className={styles.dressCodePaletteImage} />
               </div>
             ))}
           </div>
