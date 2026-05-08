@@ -46,6 +46,7 @@ const enResources = {
         cardHeading: 'Our wedding will take place at «Bereg Zhelaniy» (Wish Shore)',
         addressLine1: 'Moscow region, Solnechnogorsk urban district, Shevlino village',
         addressLine2: 'Guest gathering at 2:00 p.m.',
+        mapOpenButton: 'Get directions in Yandex Maps',
         mapEmbedTitle: 'Map: directions to Bereg Zhelaniy',
       },
       overnightNote:

@@ -382,19 +382,48 @@
   text-align: center;
 }
 
-.venueYandexMap {
-  display: block;
-  width: 100%;
-  height: 320px;
-  margin-top: 22px;
-  border: 0;
-  background: #e8e8e8;
+.venueMapButton {
+  position: relative;
+  margin-top: 16px;
+  min-height: 54px;
+  padding: 14px 22px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fffdfb !important;
+  background: linear-gradient(180deg, #8a4052 0%, #6b2d3c 52%, #5a2632 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 24px rgba(70, 28, 38, 0.28) !important;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
-@media (min-width: 600px) {
-  .venueYandexMap {
-    height: 400px;
-  }
+.venueMapButton::after {
+  content: '  ->';
+  letter-spacing: 0.05em;
+}
+
+.venueMapButton:hover,
+.venueMapButton:focus {
+  color: #fff !important;
+  background: linear-gradient(180deg, #9a4a5d 0%, #7a3344 52%, #682d3a 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 12px 28px rgba(70, 28, 38, 0.32) !important;
+  transform: translateY(-1px);
+}
+
+.venueMapButton:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.16),
+    0 4px 12px rgba(70, 28, 38, 0.22) !important;
 }
 
 .sectionTiming {

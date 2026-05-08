@@ -232,12 +232,7 @@ const translateRawGuestSubmissionApiError = (raw: string, t: TFunction): string 
 };
 
 const WeddingLandingClient = (): ReactNode => {
-  const { t, i18n } = useTranslation();
-  const yandexMapEmbedSrc = useMemo((): string => {
-    const url = new URL(weddingSiteConfig.yandexMapEmbedUrl, 'https://yandex.ru');
-    url.searchParams.set('lang', i18n.language === 'en' ? 'en_RU' : 'ru_RU');
-    return url.toString();
-  }, [i18n.language]);
+  const { t } = useTranslation();
   const [form] = Form.useForm<GuestSubmissionFormValues>();
   const plansToAttend = Form.useWatch('plansToAttend', form);
   const showGuestDetails = plansToAttend !== false;
@@ -376,14 +371,17 @@ const WeddingLandingClient = (): ReactNode => {
             </Title>
             <Paragraph style={{ marginBottom: 8 }}>{t('weddingLanding.venue.addressLine1')}</Paragraph>
             <Paragraph style={{ marginBottom: 0 }}>{t('weddingLanding.venue.addressLine2')}</Paragraph>
-            <iframe
-              className={styles.venueYandexMap}
-              title={t('weddingLanding.venue.mapEmbedTitle')}
-              src={yandexMapEmbedSrc}
-              loading="lazy"
-              allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            <Button
+              type="primary"
+              className={styles.venueMapButton}
+              size="large"
+              block
+              href={weddingSiteConfig.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('weddingLanding.venue.mapOpenButton')}
+            </Button>
           </div>
         </section>
 
