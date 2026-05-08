@@ -467,7 +467,7 @@ const WeddingLandingClient = (): ReactNode => {
             {t('weddingLanding.sections.wishes')}
           </Title>
           <div className={styles.wishesCarouselWrap}>
-            <Carousel className={styles.wishesCarousel} arrows autoplay dots>
+            <Carousel className={styles.wishesCarousel} arrows autoplay autoplaySpeed={4000} dots>
               {wishesSlides.map((wishSlide) => (
                 <div key={wishSlide.title}>
                   <div className={styles.wishSlide}>
