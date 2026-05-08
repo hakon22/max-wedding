@@ -17,7 +17,7 @@ import {
   validateGuestSubmissionOnClient,
 } from '@/lib/guest-submission-yup-form';
 import styles from '@/app/wedding-landing.module.css';
-import { DRINK_CODES, DRINK_LABELS, MAIN_COURSE_CODES, MAIN_COURSE_LABELS } from '@shared/guest-menu-codes';
+import type { MenuCatalogDto } from '@shared/menu-catalog';
 import { weddingSiteConfig } from '@shared/wedding-site-config';
 
 const { TextArea } = Input;
@@ -43,6 +43,10 @@ type CalendarCell = {
   inMonth: boolean;
   /** Пустые клетки до/после месяца — как в макете: белые скругления */
   pad: 'lead' | 'trail' | null;
+};
+
+type WeddingLandingProps = {
+  menuCatalog: MenuCatalogDto;
 };
 
 /** Обводка ячейки в форме сердца (не сдвигает цифру — абсолютное позиционирование) */
@@ -162,10 +166,10 @@ const buildResolveGuestSubmissionValidation = (t: TFunction): GuestSubmissionRes
     if (p === 'plansToAttend') {
       return t('weddingLanding.form.validation.plansToAttend');
     }
-    if (p === 'preferences.mainCourseCode' || p.endsWith('.mainCourseCode')) {
+    if (p === 'preferences.mainCourseId' || p.endsWith('.mainCourseId')) {
       return t('weddingLanding.form.validation.mainCourseRequired');
     }
-    if (p.includes('drinkCodes')) {
+    if (p.includes('drinkIds')) {
       if (yupMessage === 'Недопустимый напиток') {
         return t('weddingLanding.form.validation.drinkInvalid');
       }
@@ -183,12 +187,12 @@ const buildResolveGuestSubmissionValidation = (t: TFunction): GuestSubmissionRes
       }
     }
     if (
-      p.includes('mainCourseCode') ||
+      p.includes('mainCourseId') ||
       (yupMessage.toLowerCase().includes('is a required field') && p.toLowerCase().includes('maincourse'))
     ) {
       return t('weddingLanding.form.validation.mainCourseRequired');
     }
-    if (yupMessage.toLowerCase().includes('maincoursecode') && yupMessage.toLowerCase().includes('required')) {
+    if (yupMessage.toLowerCase().includes('maincourseid') && yupMessage.toLowerCase().includes('required')) {
       return t('weddingLanding.form.validation.mainCourseRequired');
     }
     return yupMessage;
@@ -204,6 +208,8 @@ const RU_GUEST_SUBMISSION_API_ERROR_TO_I18N: [string, string][] = [
   ['Укажите имя и фамилию', 'weddingLanding.form.validation.guestNameRequired'],
   ['Максимум 500 символов', 'weddingLanding.form.validation.messageMax'],
   ['Недопустимый напиток', 'weddingLanding.form.validation.drinkInvalid'],
+  ['Выбран недопустимый напиток', 'weddingLanding.form.validation.drinkInvalid'],
+  ['Выбрано недопустимое основное блюдо', 'weddingLanding.form.validation.mainCourseRequired'],
   ['Недопустимое значение', 'weddingLanding.form.validation.invalidValue'],
 ];
 
@@ -218,8 +224,8 @@ const translateRawGuestSubmissionApiError = (raw: string, t: TFunction): string 
   return out;
 };
 
-const WeddingLandingClient = (): ReactNode => {
-  const { t } = useTranslation();
+const WeddingLandingClient = ({ menuCatalog }: WeddingLandingProps): ReactNode => {
+  const { t, i18n } = useTranslation();
   const [form] = Form.useForm<GuestSubmissionFormValues>();
   const plansToAttend = Form.useWatch('plansToAttend', form);
   const showGuestDetails = plansToAttend !== false;
@@ -231,6 +237,22 @@ const WeddingLandingClient = (): ReactNode => {
   const dressCodeSectionRef = useRef<HTMLElement>(null);
   const [isDressCodeVisible, setIsDressCodeVisible] = useState(false);
   const [isDressCodeHovered, setIsDressCodeHovered] = useState(false);
+  const mainCourseOptions = useMemo(
+    () =>
+      menuCatalog.mainCourses.map((mainCourse) => ({
+        value: mainCourse.id,
+        label: i18n.language.startsWith('en') ? mainCourse.labelEn : mainCourse.labelRu,
+      })),
+    [i18n.language, menuCatalog.mainCourses],
+  );
+  const drinkOptions = useMemo(
+    () =>
+      menuCatalog.drinks.map((drink) => ({
+        value: drink.id,
+        label: i18n.language.startsWith('en') ? drink.labelEn : drink.labelRu,
+      })),
+    [i18n.language, menuCatalog.drinks],
+  );
 
   useEffect(() => {
     const video = weddingVideoRef.current;
@@ -299,7 +321,7 @@ const WeddingLandingClient = (): ReactNode => {
           plansToAttend: true,
           withChildren: false,
           needsOvernightStay: false,
-          drinkCodes: [],
+          drinkIds: [],
           message: undefined,
         });
         queueMicrotask(() => {
@@ -493,13 +515,13 @@ const WeddingLandingClient = (): ReactNode => {
                 plansToAttend: true,
                 withChildren: false,
                 needsOvernightStay: false,
-                drinkCodes: [],
+                drinkIds: [],
               }}
               onValuesChange={(changedValues) => {
                 if ('plansToAttend' in changedValues && changedValues.plansToAttend === false) {
                   form.setFieldsValue({
-                    mainCourseCode: undefined,
-                    drinkCodes: [],
+                    mainCourseId: undefined,
+                    drinkIds: [],
                     withChildren: false,
                     needsOvernightStay: false,
                     message: undefined,
@@ -529,26 +551,20 @@ const WeddingLandingClient = (): ReactNode => {
               </Form.Item>
               {showGuestDetails ? (
                 <>
-                  <Form.Item label={t('weddingLanding.form.mainCourseLabel')} name="mainCourseCode" required>
+                  <Form.Item label={t('weddingLanding.form.mainCourseLabel')} name="mainCourseId" required>
                     <Select
                       size="large"
                       placeholder={t('weddingLanding.form.mainCoursePlaceholder')}
-                      options={MAIN_COURSE_CODES.map((mainCourseCode) => ({
-                        value: mainCourseCode,
-                        label: MAIN_COURSE_LABELS[mainCourseCode],
-                      }))}
+                      options={mainCourseOptions}
                     />
                   </Form.Item>
-                  <Form.Item label={t('weddingLanding.form.drinkCodesLabel')} name="drinkCodes" required>
+                  <Form.Item label={t('weddingLanding.form.drinkCodesLabel')} name="drinkIds" required>
                     <Select
                       mode="multiple"
                       allowClear
                       size="large"
                       placeholder={t('weddingLanding.form.drinkCodesPlaceholder')}
-                      options={DRINK_CODES.map((drinkCode) => ({
-                        value: drinkCode,
-                        label: DRINK_LABELS[drinkCode],
-                      }))}
+                      options={drinkOptions}
                     />
                   </Form.Item>
                   <Form.Item name="withChildren" valuePropName="checked">
@@ -614,10 +630,10 @@ const WeddingLandingClient = (): ReactNode => {
   );
 };
 
-const WeddingLanding = (): ReactNode => {
+const WeddingLanding = ({ menuCatalog }: WeddingLandingProps): ReactNode => {
   return (
     <App>
-      <WeddingLandingClient />
+      <WeddingLandingClient menuCatalog={menuCatalog} />
     </App>
   );
 };

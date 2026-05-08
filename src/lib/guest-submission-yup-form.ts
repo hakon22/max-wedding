@@ -2,10 +2,9 @@ import * as yup from 'yup';
 import type { FormInstance } from 'antd';
 import type { NamePath } from 'antd/es/form/interface';
 
-import type { DrinkCode, MainCourseCode } from '@shared/guest-menu-codes';
 import { guestSubmissionRequestSchema } from '@shared/guest-submission.schema';
 
-const PREF_KEYS = new Set(['mainCourseCode', 'withChildren', 'needsOvernightStay', 'message', 'drinkCodes']);
+const PREF_KEYS = new Set(['mainCourseId', 'withChildren', 'needsOvernightStay', 'message', 'drinkIds']);
 
 export type GuestSubmissionResolveValidationMessage = (args: {
   yupPath?: string;
@@ -17,11 +16,11 @@ export type GuestSubmissionResolveValidationMessage = (args: {
 export type GuestSubmissionFormValues = {
   guestName?: string;
   plansToAttend?: boolean;
-  mainCourseCode?: MainCourseCode;
+  mainCourseId?: number;
   withChildren?: boolean;
   needsOvernightStay?: boolean;
   message?: string;
-  drinkCodes?: DrinkCode[];
+  drinkIds?: number[];
 };
 
 /**
@@ -39,7 +38,7 @@ export const formValuesToGuestSubmissionBody = (values: GuestSubmissionFormValue
         withChildren: false as const,
         needsOvernightStay: false as const,
         message: typeof values.message === 'string' ? values.message : '',
-        drinkCodes: [] as DrinkCode[],
+        drinkIds: [] as number[],
       },
     };
   }
@@ -47,11 +46,11 @@ export const formValuesToGuestSubmissionBody = (values: GuestSubmissionFormValue
     guestName,
     plansToAttend: true as const,
     preferences: {
-      mainCourseCode: values.mainCourseCode,
+      mainCourseId: values.mainCourseId,
       withChildren: values.withChildren ?? false,
       needsOvernightStay: values.needsOvernightStay ?? false,
       message: values.message,
-      drinkCodes: values.drinkCodes ?? [],
+      drinkIds: values.drinkIds ?? [],
     },
   };
 };
@@ -68,22 +67,22 @@ const yupPathToFormName = (yupPath: string | undefined): NamePath<GuestSubmissio
   if (yupPath === 'guestName' || yupPath === 'plansToAttend') {
     return yupPath;
   }
-  if (yupPath.startsWith('drinkCodes')) {
-    return 'drinkCodes';
+  if (yupPath.startsWith('drinkIds')) {
+    return 'drinkIds';
   }
   const m = /^preferences\.(.+)$/.exec(yupPath);
   if (m) {
     const sub = m[1].split('.')[0].split('[')[0] ?? m[1];
-    if (sub === 'drinkCodes' || sub.startsWith('drinkCodes')) {
-      return 'drinkCodes';
+    if (sub === 'drinkIds' || sub.startsWith('drinkIds')) {
+      return 'drinkIds';
     }
     if (PREF_KEYS.has(sub)) {
       if (
-        sub === 'mainCourseCode' ||
+        sub === 'mainCourseId' ||
         sub === 'withChildren' ||
         sub === 'needsOvernightStay' ||
         sub === 'message' ||
-        sub === 'drinkCodes'
+        sub === 'drinkIds'
       ) {
         return sub;
       }

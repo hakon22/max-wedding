@@ -1,18 +1,18 @@
 import * as yup from 'yup';
 
-import { DRINK_CODES, MAIN_COURSE_CODES } from '@shared/guest-menu-codes';
-
-const drinkCodeSchema = yup
-  .string()
-  .oneOf([...DRINK_CODES], 'Недопустимый напиток')
+const drinkIdSchema = yup
+  .number()
+  .integer('Недопустимый напиток')
+  .min(1, 'Недопустимый напиток')
   .required('Недопустимый напиток');
 
 /** Предпочтения гостя, если планирует присутствовать */
 export const guestPreferencesAttendingSchema = yup
   .object({
-    mainCourseCode: yup
-      .string()
-      .oneOf([...MAIN_COURSE_CODES], 'Выберите основное блюдо')
+    mainCourseId: yup
+      .number()
+      .integer('Выберите основное блюдо')
+      .min(1, 'Выберите основное блюдо')
       .required('Выберите основное блюдо'),
     withChildren: yup.boolean().required('Недопустимое значение'),
     needsOvernightStay: yup.boolean().required('Недопустимое значение'),
@@ -21,9 +21,9 @@ export const guestPreferencesAttendingSchema = yup
       .transform((v) => (v == null || typeof v !== 'string' ? '' : v.trim()))
       .max(500, 'Максимум 500 символов')
       .optional(),
-    drinkCodes: yup
+    drinkIds: yup
       .array()
-      .of(drinkCodeSchema)
+      .of(drinkIdSchema)
       .min(1, 'Выберите хотя бы один вариант напитков')
       .required('Выберите хотя бы один вариант напитков'),
   })
@@ -39,9 +39,9 @@ export const guestPreferencesAbsentSchema = yup
       .transform((v) => (v == null || typeof v !== 'string' ? '' : v.trim()))
       .max(500, 'Максимум 500 символов')
       .optional(),
-    drinkCodes: yup
+    drinkIds: yup
       .array()
-      .of(drinkCodeSchema)
+      .of(drinkIdSchema)
       .length(0, 'Напитки не заполняются, если вы не придёте')
       .required('Напитки не заполняются, если вы не придёте'),
   })

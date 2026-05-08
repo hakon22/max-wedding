@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 
 import { GuestSubmissionDrinkEntity } from '@server/db/entities/guest-submission-drink.entity';
-import type { MainCourseCode } from '@shared/guest-menu-codes';
 
 /** Источник заявки */
 export type GuestSubmissionSource = 'web' | 'telegram' | 'import';
@@ -69,11 +68,11 @@ export class GuestSubmissionEntity extends BaseEntity {
   public message?: string | null;
 
   /** Выбранное блюдо; null если гость отметил отсутствие */
-  @Column('character varying', {
-    name: 'main_course_code',
+  @Column('integer', {
+    name: 'main_course_id',
     nullable: true,
   })
-  public mainCourseCode: MainCourseCode | null;
+  public mainCourseId: number | null;
 
   /** Источник заявки */
   @Column('character varying', {

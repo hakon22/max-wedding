@@ -1,16 +1,16 @@
 import ExcelJS from 'exceljs';
-import { Singleton } from 'typescript-ioc';
+import { Container, Singleton } from 'typescript-ioc';
 
 import { GuestSubmissionDrinkEntity } from '@server/db/entities/guest-submission-drink.entity';
 import { GuestSubmissionEntity } from '@server/db/entities/guest-submission.entity';
 import { BaseService } from '@server/services/app/base-service';
-import { DRINK_LABELS, MAIN_COURSE_LABELS } from '@shared/guest-menu-codes';
+import { MenuCatalogService } from '@server/services/menu/menu-catalog.service';
 
 /** Строка сырого результата для листа «Напитки» */
 type GuestSubmissionDrinkExportRow = {
   guestSubmissionDrinkRowId: number;
   guestSubmissionId: number;
-  drinkCode: string;
+  drinkId: number;
   guestName: string | null;
 };
 
@@ -19,6 +19,8 @@ type GuestSubmissionDrinkExportRow = {
  */
 @Singleton
 export class GuestSubmissionExcelService extends BaseService {
+  private readonly menuCatalogService = Container.get(MenuCatalogService);
+
   /**
    * Сборка книги: лист «Заявки» (плоско) и «Напитки» (нормализованно)
    */
@@ -36,7 +38,7 @@ export class GuestSubmissionExcelService extends BaseService {
       .createQueryBuilder(GuestSubmissionDrinkEntity, 'guestSubmissionDrink')
       .select([
         'guestSubmissionDrink.id AS "guestSubmissionDrinkRowId"',
-        'guestSubmissionDrink.drinkCode AS "drinkCode"',
+        'guestSubmissionDrink.drinkId AS "drinkId"',
       ])
       .leftJoin('guestSubmissionDrink.submission', 'guestSubmission')
       .addSelect([
@@ -48,6 +50,7 @@ export class GuestSubmissionExcelService extends BaseService {
 
     const guestSubmissionDrinkExportRows =
       await guestSubmissionDrinkExportQueryBuilder.getRawMany<GuestSubmissionDrinkExportRow>();
+    const labelMaps = await this.menuCatalogService.getLabelMaps();
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'max-wedding';
@@ -70,17 +73,15 @@ export class GuestSubmissionExcelService extends BaseService {
       const drinkLabelsForGuest =
         guestSubmission.drinks?.map(
           (guestSubmissionDrink) =>
-            DRINK_LABELS[guestSubmissionDrink.drinkCode as keyof typeof DRINK_LABELS] ??
-            guestSubmissionDrink.drinkCode,
+            labelMaps.drinkLabelById[guestSubmissionDrink.drinkId] ?? `ID ${guestSubmissionDrink.drinkId}`,
         ) ?? [];
       guestSubmissionsSheet.addRow({
         id: guestSubmission.id,
         created: guestSubmission.created.toISOString(),
         guestName: guestSubmission.guestName ?? '',
         plansToAttend: guestSubmission.plansToAttend ? 'да' : 'нет',
-        mainCourse: guestSubmission.mainCourseCode
-          ? MAIN_COURSE_LABELS[guestSubmission.mainCourseCode as keyof typeof MAIN_COURSE_LABELS] ??
-            guestSubmission.mainCourseCode
+        mainCourse: guestSubmission.mainCourseId
+          ? labelMaps.mainCourseLabelById[guestSubmission.mainCourseId] ?? `ID ${guestSubmission.mainCourseId}`
           : '—',
         drinks: drinkLabelsForGuest.join(', '),
         withChildren: guestSubmission.withChildren ? 'да' : 'нет',
@@ -96,7 +97,7 @@ export class GuestSubmissionExcelService extends BaseService {
     guestSubmissionDrinksSheet.columns = [
       { header: 'ID строки', key: 'rowId', width: 12 },
       { header: 'ID заявки', key: 'submissionId', width: 12 },
-      { header: 'Код напитка', key: 'drinkCode', width: 18 },
+      { header: 'ID напитка', key: 'drinkId', width: 18 },
       { header: 'Напиток', key: 'drinkLabel', width: 22 },
       { header: 'Гость', key: 'guestName', width: 28 },
     ];
@@ -104,10 +105,9 @@ export class GuestSubmissionExcelService extends BaseService {
       guestSubmissionDrinksSheet.addRow({
         rowId: guestSubmissionDrinkExportRow.guestSubmissionDrinkRowId,
         submissionId: guestSubmissionDrinkExportRow.guestSubmissionId,
-        drinkCode: guestSubmissionDrinkExportRow.drinkCode,
+        drinkId: guestSubmissionDrinkExportRow.drinkId,
         drinkLabel:
-          DRINK_LABELS[guestSubmissionDrinkExportRow.drinkCode as keyof typeof DRINK_LABELS] ??
-          guestSubmissionDrinkExportRow.drinkCode,
+          labelMaps.drinkLabelById[guestSubmissionDrinkExportRow.drinkId] ?? `ID ${guestSubmissionDrinkExportRow.drinkId}`,
         guestName: guestSubmissionDrinkExportRow.guestName ?? '',
       });
     }

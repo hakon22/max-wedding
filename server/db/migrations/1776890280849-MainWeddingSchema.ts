@@ -34,7 +34,7 @@ export class MainWeddingSchema1776890280849 implements MigrationInterface {
         "with_children" boolean NOT NULL DEFAULT false,
         "needs_overnight_stay" boolean NOT NULL DEFAULT false,
         "message" text,
-        "main_course_code" character varying,
+        "main_course_id" integer,
         "source" character varying NOT NULL DEFAULT 'web',
         CONSTRAINT "PK_guest_submission" PRIMARY KEY ("id")
       )`);
@@ -43,7 +43,7 @@ export class MainWeddingSchema1776890280849 implements MigrationInterface {
       CREATE TABLE "public"."guest_submission_drink" (
         "id" SERIAL NOT NULL,
         "submission_id" integer NOT NULL,
-        "drink_code" character varying NOT NULL,
+        "drink_id" integer NOT NULL,
         CONSTRAINT "PK_guest_submission_drink" PRIMARY KEY ("id"),
         CONSTRAINT "FK_guest_submission_drink_submission" FOREIGN KEY ("submission_id")
           REFERENCES "public"."guest_submission"("id") ON DELETE CASCADE ON UPDATE NO ACTION

@@ -1,11 +1,11 @@
 import { Telegraf } from 'telegraf';
-import { Singleton } from 'typescript-ioc';
+import { Container, Singleton } from 'typescript-ioc';
 
 import type { GuestSubmissionEntity } from '@server/db/entities/guest-submission.entity';
 import { UserEntity, UserRoleEnum } from '@server/db/entities/user.entity';
 import { BaseService } from '@server/services/app/base-service';
+import { MenuCatalogService } from '@server/services/menu/menu-catalog.service';
 import { getTelegrafProxyOptions } from '@server/telegram/telegram-proxy.util';
-import { DRINK_LABELS, MAIN_COURSE_LABELS } from '@shared/guest-menu-codes';
 
 const TELEGRAM_MAX_MESSAGE = 3500;
 
@@ -17,17 +17,18 @@ const yesNo = (value: boolean): string => (value ? 'да ✅' : 'нет ❌');
 /** Визуальный разделитель между блоками (HTML) */
 const blockSep = '\n\n';
 
-const formatAdminNewSubmissionHtml = (submission: GuestSubmissionEntity): string => {
+const formatAdminNewSubmissionHtml = (
+  submission: GuestSubmissionEntity,
+  labelMaps: { mainCourseLabelById: Record<number, string>; drinkLabelById: Record<number, string> },
+): string => {
   const drinkLines =
     submission.drinks?.map(
       (guestSubmissionDrink) =>
-        DRINK_LABELS[guestSubmissionDrink.drinkCode as keyof typeof DRINK_LABELS] ??
-        guestSubmissionDrink.drinkCode,
+        labelMaps.drinkLabelById[guestSubmissionDrink.drinkId] ?? `ID ${guestSubmissionDrink.drinkId}`,
     ) ?? [];
   const attending = submission.plansToAttend;
-  const courseLabel = submission.mainCourseCode
-    ? MAIN_COURSE_LABELS[submission.mainCourseCode as keyof typeof MAIN_COURSE_LABELS] ??
-      submission.mainCourseCode
+  const courseLabel = submission.mainCourseId
+    ? labelMaps.mainCourseLabelById[submission.mainCourseId] ?? `ID ${submission.mainCourseId}`
     : '—';
   const guest = escapeHtml(submission.guestName ?? '—');
   const header = '📋 <b>Новая заявка с сайта</b>';
@@ -65,6 +66,8 @@ const formatAdminNewSubmissionHtml = (submission: GuestSubmissionEntity): string
 export class AdminSubmissionNotifyService extends BaseService {
   private readonly tag = 'AdminSubmissionNotifyService';
 
+  private readonly menuCatalogService = Container.get(MenuCatalogService);
+
   /**
    * Рассылка краткой сводки по заявке; ошибки только в лог, без throw
    */
@@ -83,7 +86,8 @@ export class AdminSubmissionNotifyService extends BaseService {
       this.loggerService.debug(this.tag, 'Нет активных админов в БД — уведомление пропущено');
       return;
     }
-    let text = formatAdminNewSubmissionHtml(submission);
+    const labelMaps = await this.menuCatalogService.getLabelMaps();
+    let text = formatAdminNewSubmissionHtml(submission, labelMaps);
     if (text.length > TELEGRAM_MAX_MESSAGE) {
       text = `${text.slice(0, TELEGRAM_MAX_MESSAGE - 1)}…`;
     }

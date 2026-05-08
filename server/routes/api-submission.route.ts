@@ -7,6 +7,7 @@ import { BaseRouter } from '@server/routes/base.route';
 import { AdminSubmissionNotifyService } from '@server/services/guest/admin-submission-notify.service';
 import { GuestSubmissionService } from '@server/services/guest/guest-submission.service';
 import { LoggerService } from '@server/services/app/logger-service';
+import { MenuCatalogService, MenuCatalogValidationError } from '@server/services/menu/menu-catalog.service';
 import { DeveloperNotifyService } from '@server/telegram/developer-notify.service';
 import { guestSubmissionRequestSchema } from '@shared/guest-submission.schema';
 
@@ -21,6 +22,8 @@ export class ApiSubmissionRoute extends BaseRouter {
   private readonly developerNotifyService = Container.get(DeveloperNotifyService);
 
   private readonly loggerService = Container.get(LoggerService);
+
+  private readonly menuCatalogService = Container.get(MenuCatalogService);
 
   public set = (router: Router): void => {
     /**
@@ -47,8 +50,17 @@ export class ApiSubmissionRoute extends BaseRouter {
           return;
         }
 
-        const guestSubmissionRecord = await this.guestSubmissionService.createFromValidatedBody(body);
-        void this.adminSubmissionNotifyService.notifyAdminsOfNewSubmission(guestSubmissionRecord);
+        let guestSubmissionRecord;
+        try {
+          guestSubmissionRecord = await this.guestSubmissionService.createFromValidatedBody(body);
+        } catch (error) {
+          if (error instanceof MenuCatalogValidationError) {
+            res.status(400).json({ ok: false, error: error.message });
+            return;
+          }
+          throw error;
+        }
+        this.adminSubmissionNotifyService.notifyAdminsOfNewSubmission(guestSubmissionRecord);
         res.status(201).json({ ok: true, id: guestSubmissionRecord.id });
       };
 
@@ -70,6 +82,22 @@ export class ApiSubmissionRoute extends BaseRouter {
         ok: true,
         db: this.databaseService.getDataSource().isInitialized,
         when: new Date().toISOString(),
+      });
+    });
+
+    /**
+     * Публичный справочник меню для SSR/клиента
+     */
+    router.get('/api/menu-options', (req: Request, res: Response) => {
+      const run = async (): Promise<void> => {
+        const activeOnly = req.query.activeOnly !== 'false';
+        const catalog = await this.menuCatalogService.listCatalog(activeOnly);
+        res.json({ ok: true, ...catalog });
+      };
+      run().catch((error) => {
+        const normalizedError = error instanceof Error ? error : new Error(String(error));
+        this.loggerService.error('menu-options', normalizedError);
+        res.status(500).json({ ok: false, error: 'Не удалось получить меню' });
       });
     });
   };

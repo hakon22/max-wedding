@@ -29,9 +29,9 @@ export class GuestSubmissionDrinkEntity extends BaseEntity {
   })
   public submission: GuestSubmissionEntity;
 
-  /** Код напитка */
-  @Column('character varying', {
-    name: 'drink_code',
+  /** ID напитка */
+  @Column('integer', {
+    name: 'drink_id',
   })
-  public drinkCode: string;
+  public drinkId: number;
 }

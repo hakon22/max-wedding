@@ -1,14 +1,17 @@
-import { Singleton } from 'typescript-ioc';
+import { Container, Singleton } from 'typescript-ioc';
 import * as yup from 'yup';
 
 import { GuestSubmissionDrinkEntity } from '@server/db/entities/guest-submission-drink.entity';
 import { GuestSubmissionEntity } from '@server/db/entities/guest-submission.entity';
 import { BaseService } from '@server/services/app/base-service';
+import { MenuCatalogService } from '@server/services/menu/menu-catalog.service';
 import type { GuestPreferencesAbsent, GuestPreferencesAttending } from '@shared/guest-submission.schema';
 import { guestSubmissionRequestSchema } from '@shared/guest-submission.schema';
 
 @Singleton
 export class GuestSubmissionService extends BaseService {
+  private readonly menuCatalogService = Container.get(MenuCatalogService);
+
   /**
    * Сохранение валидированного тела заявки (шапка + строки напитков в одной транзакции)
    */
@@ -22,15 +25,16 @@ export class GuestSubmissionService extends BaseService {
       guestSubmissionRecord.plansToAttend = body.plansToAttend;
       if (body.plansToAttend) {
         const preferences = body.preferences as GuestPreferencesAttending;
+        await this.menuCatalogService.ensureValidSelection(preferences.mainCourseId, preferences.drinkIds);
         guestSubmissionRecord.withChildren = preferences.withChildren;
         guestSubmissionRecord.needsOvernightStay = preferences.needsOvernightStay;
         const trimmedAttendingMessage = preferences.message?.trim();
         guestSubmissionRecord.message =
           trimmedAttendingMessage && trimmedAttendingMessage.length > 0 ? trimmedAttendingMessage : null;
-        guestSubmissionRecord.mainCourseCode = preferences.mainCourseCode;
-        guestSubmissionRecord.drinks = preferences.drinkCodes.map((drinkCode) => {
+        guestSubmissionRecord.mainCourseId = preferences.mainCourseId;
+        guestSubmissionRecord.drinks = preferences.drinkIds.map((drinkId) => {
           const guestSubmissionDrinkRow = new GuestSubmissionDrinkEntity();
-          guestSubmissionDrinkRow.drinkCode = drinkCode;
+          guestSubmissionDrinkRow.drinkId = drinkId;
           return guestSubmissionDrinkRow;
         });
       } else {
@@ -39,7 +43,7 @@ export class GuestSubmissionService extends BaseService {
         const absentPreferences = body.preferences as GuestPreferencesAbsent;
         const trimmedMessage = absentPreferences.message?.trim();
         guestSubmissionRecord.message = trimmedMessage && trimmedMessage.length > 0 ? trimmedMessage : null;
-        guestSubmissionRecord.mainCourseCode = null;
+        guestSubmissionRecord.mainCourseId = null;
         guestSubmissionRecord.drinks = [];
       }
       guestSubmissionRecord.source = 'web';
