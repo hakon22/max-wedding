@@ -41,6 +41,50 @@ type TelegramGlobal = {
   };
 };
 
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const getInitDataFromLocation = (): string | null => {
+  const fromSource = (source: string): string | null => {
+    const normalized = source.startsWith('#') || source.startsWith('?') ? source.slice(1) : source;
+    if (!normalized) {
+      return null;
+    }
+    const params = new URLSearchParams(normalized);
+    const raw = params.get('tgWebAppData');
+    if (!raw) {
+      return null;
+    }
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  };
+  return fromSource(window.location.hash) ?? fromSource(window.location.search);
+};
+
+const resolveTelegramInitData = async (): Promise<string | null> => {
+  const timeoutAt = Date.now() + 3500;
+  while (Date.now() < timeoutAt) {
+    const webApp = (window as unknown as TelegramGlobal).Telegram?.WebApp;
+    webApp?.ready?.();
+    webApp?.expand?.();
+    const direct = webApp?.initData?.trim();
+    if (direct) {
+      return direct;
+    }
+    const fromLocation = getInitDataFromLocation();
+    if (fromLocation) {
+      return fromLocation;
+    }
+    await sleep(120);
+  }
+  return getInitDataFromLocation();
+};
+
 type MenuKindSectionProps = {
   kind: MenuItemKind;
   title: string;
@@ -283,12 +327,9 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
 
   useEffect(() => {
     const run = async (): Promise<void> => {
-      const webApp = (window as unknown as TelegramGlobal).Telegram?.WebApp;
-      webApp?.ready?.();
-      webApp?.expand?.();
-      const initData = webApp?.initData?.trim();
+      const initData = await resolveTelegramInitData();
       if (!initData) {
-        setBootError('Mini App должен быть открыт из Telegram.');
+        setBootError('Mini App должен быть открыт через WebApp-кнопку Telegram (/miniapp).');
         return;
       }
       setLoading(true);

@@ -140,8 +140,6 @@ export class TelegramWeddingBotCommandsService extends BaseService {
             '📱 <b>Mini App редактор меню</b>',
             '',
             'Нажмите кнопку ниже — она откроет приложение в режиме WebApp.',
-            '',
-            `Если кнопка не работает, проверьте в BotFather домен Mini App: ${escapeHtml(miniAppUrl)}`,
           ].join('\n'),
           {
             parse_mode: 'HTML',
@@ -447,7 +445,6 @@ export class TelegramWeddingBotCommandsService extends BaseService {
     return [
       '🍽 <b>Редактор меню</b>',
       '',
-      this.getMiniAppAdminUrl() ? `📱 Mini App: ${this.getMiniAppAdminUrl()}` : null,
       `Основные блюда: <code>${catalog.mainCourses.length}</code>`,
       `Напитки: <code>${catalog.drinks.length}</code>`,
       '',
