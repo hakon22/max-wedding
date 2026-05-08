@@ -120,19 +120,40 @@ export class TelegramWeddingBotCommandsService extends BaseService {
     });
 
     bot.command('miniapp', async (context) => {
-      await this.runAdminCommand(context, bot, async () => {
+      try {
+        if (!this.databaseService.getDataSource().isInitialized) {
+          await context.reply('База не готова');
+          return;
+        }
+        const user = await this.telegramUserService.ensureUserFromContext(context);
+        if (!this.telegramUserService.isActiveAdmin(user)) {
+          await context.reply('Нет прав. Доступ только для администраторов (роль ADMIN в базе).');
+          return;
+        }
         const miniAppUrl = this.getMiniAppAdminUrl();
         if (!miniAppUrl) {
-          return 'Mini App URL не настроен. Укажите NEXT_PUBLIC_APP_URL.';
+          await context.reply('Mini App URL не настроен. Укажите NEXT_PUBLIC_APP_URL.');
+          return;
         }
-        return [
-          '📱 <b>Mini App редактор меню</b>',
-          '',
-          `<a href="${escapeHtml(miniAppUrl)}">Открыть Mini App</a>`,
-          '',
-          'Если ссылка не открывается как Mini App, добавьте её в BotFather (Web App URL).',
-        ].join('\n');
-      });
+        await context.reply(
+          [
+            '📱 <b>Mini App редактор меню</b>',
+            '',
+            'Нажмите кнопку ниже — она откроет приложение в режиме WebApp.',
+            '',
+            `Если кнопка не работает, проверьте в BotFather домен Mini App: ${escapeHtml(miniAppUrl)}`,
+          ].join('\n'),
+          {
+            parse_mode: 'HTML',
+            ...Markup.keyboard([[Markup.button.webApp('📱 Открыть Mini App', miniAppUrl)]])
+              .resize()
+              .oneTime(),
+          },
+        );
+      } catch (error) {
+        this.loggerService.error(this.tag, 'miniapp', error);
+        await context.reply('Ошибка при открытии Mini App.');
+      }
     });
 
     bot.action(/^menu:(.+)$/u, async (context) => {
