@@ -1,7 +1,7 @@
 'use client';
 
 import type { CSSProperties, ReactNode } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { App, Button, Card, Carousel, Checkbox, Form, Input, Radio, Select, Typography, message } from 'antd';
 import { isAxiosError } from 'axios';
@@ -159,47 +159,6 @@ const formatHeroPhotoDateLine = (): string => {
   return `${dd} / ${mm} / ${weddingYear}`;
 };
 
-type FontPreviewId = 'cormorant' | 'playfair' | 'ebGaramond' | 'spectral' | 'philosopher';
-
-const FONT_PREVIEW_ORDER: FontPreviewId[] = ['cormorant', 'playfair', 'ebGaramond', 'spectral', 'philosopher'];
-
-const FONT_PREVIEW_CSS_VAR: Record<FontPreviewId, string> = {
-  cormorant: 'var(--font-wedding-serif)',
-  playfair: 'var(--font-wedding-choice-playfair)',
-  ebGaramond: 'var(--font-wedding-choice-eb-garamond)',
-  spectral: 'var(--font-wedding-choice-spectral)',
-  philosopher: 'var(--font-wedding-choice-philosopher)',
-};
-
-/** Имена для подписи в выпадающем списке (шрифты уже подгружены через next/font) */
-const FONT_PREVIEW_DROPDOWN_FAMILY: Record<FontPreviewId, string> = {
-  cormorant: '"Cormorant Garamond", Georgia, serif',
-  playfair: '"Playfair Display", Georgia, serif',
-  ebGaramond: '"EB Garamond", Georgia, serif',
-  spectral: '"Spectral", Georgia, serif',
-  philosopher: '"Philosopher", Georgia, serif',
-};
-
-type BodyFontPreviewId = 'geist' | 'merriweather' | 'nunitoSans' | 'comfortaa' | 'neucha';
-
-const BODY_FONT_PREVIEW_ORDER: BodyFontPreviewId[] = ['geist', 'merriweather', 'nunitoSans', 'comfortaa', 'neucha'];
-
-const BODY_FONT_PREVIEW_CSS_VAR: Record<BodyFontPreviewId, string> = {
-  geist: 'var(--font-geist)',
-  merriweather: 'var(--font-body-choice-merriweather)',
-  nunitoSans: 'var(--font-body-choice-nunito-sans)',
-  comfortaa: 'var(--font-body-choice-comfortaa)',
-  neucha: 'var(--font-body-choice-neucha)',
-};
-
-const BODY_FONT_PREVIEW_DROPDOWN_FAMILY: Record<BodyFontPreviewId, string> = {
-  geist: 'var(--font-geist), system-ui, sans-serif',
-  merriweather: '"Merriweather", Georgia, serif',
-  nunitoSans: '"Nunito Sans", system-ui, sans-serif',
-  comfortaa: '"Comfortaa", system-ui, sans-serif',
-  neucha: '"Neucha", cursive',
-};
-
 /** Сообщения yup в `guest-submission.schema` (рус.) → ключи i18n */
 const buildResolveGuestSubmissionValidation = (t: TFunction): GuestSubmissionResolveValidationMessage => {
   return ({ yupPath, yupMessage, isFormLevel }) => {
@@ -274,8 +233,6 @@ const translateRawGuestSubmissionApiError = (raw: string, t: TFunction): string 
 
 const WeddingLandingClient = (): ReactNode => {
   const { t, i18n } = useTranslation();
-  const [fontPreviewId, setFontPreviewId] = useState<FontPreviewId>('cormorant');
-  const [bodyFontPreviewId, setBodyFontPreviewId] = useState<BodyFontPreviewId>('geist');
   const yandexMapEmbedSrc = useMemo((): string => {
     const url = new URL(weddingSiteConfig.yandexMapEmbedUrl, 'https://yandex.ru');
     url.searchParams.set('lang', i18n.language === 'en' ? 'en_RU' : 'ru_RU');
@@ -313,32 +270,6 @@ const WeddingLandingClient = (): ReactNode => {
 
   const heroDateLine = formatHeroPhotoDateLine();
   const heroDateAria = heroDateLine.replaceAll(/\s*\/\s*/g, '.');
-
-  const fontPreviewOptions = useMemo(
-    () =>
-      FONT_PREVIEW_ORDER.map((fontId) => ({
-        value: fontId,
-        label: (
-          <span style={{ fontFamily: FONT_PREVIEW_DROPDOWN_FAMILY[fontId] }}>
-            {t(`weddingLanding.fontPreview.fonts.${fontId}`)}
-          </span>
-        ),
-      })),
-    [t, i18n.language],
-  );
-
-  const bodyFontPreviewOptions = useMemo(
-    () =>
-      BODY_FONT_PREVIEW_ORDER.map((fontId) => ({
-        value: fontId,
-        label: (
-          <span style={{ fontFamily: BODY_FONT_PREVIEW_DROPDOWN_FAMILY[fontId] }}>
-            {t(`weddingLanding.fontPreview.bodyFonts.${fontId}`)}
-          </span>
-        ),
-      })),
-    [t, i18n.language],
-  );
 
   const onFinish = async (values: GuestSubmissionFormValues): Promise<void> => {
     const isValid = await validateGuestSubmissionOnClient(
@@ -390,45 +321,7 @@ const WeddingLandingClient = (): ReactNode => {
   };
 
   return (
-    <div
-      className={styles.landingRoot}
-      style={
-        {
-          ['--font-wedding-display' as string]: FONT_PREVIEW_CSS_VAR[fontPreviewId],
-          ['--font-wedding-body' as string]: BODY_FONT_PREVIEW_CSS_VAR[bodyFontPreviewId],
-        } as CSSProperties
-      }
-    >
-      <div className={styles.fontPreviewBar}>
-        <div className={styles.fontPreviewBarRows}>
-          <div className={styles.fontPreviewBarRow}>
-            <span className={styles.fontPreviewBarLabel}>{t('weddingLanding.fontPreview.headingsLabel')}</span>
-            <Select<FontPreviewId>
-              className={styles.fontPreviewBarSelect}
-              size="middle"
-              value={fontPreviewId}
-              onChange={setFontPreviewId}
-              options={fontPreviewOptions}
-              popupMatchSelectWidth={false}
-              getPopupContainer={(triggerNode) => triggerNode.parentElement ?? document.body}
-              aria-label={t('weddingLanding.fontPreview.headingsLabel')}
-            />
-          </div>
-          <div className={styles.fontPreviewBarRow}>
-            <span className={styles.fontPreviewBarLabel}>{t('weddingLanding.fontPreview.bodyLabel')}</span>
-            <Select<BodyFontPreviewId>
-              className={styles.fontPreviewBarSelect}
-              size="middle"
-              value={bodyFontPreviewId}
-              onChange={setBodyFontPreviewId}
-              options={bodyFontPreviewOptions}
-              popupMatchSelectWidth={false}
-              getPopupContainer={(triggerNode) => triggerNode.parentElement ?? document.body}
-              aria-label={t('weddingLanding.fontPreview.bodyLabel')}
-            />
-          </div>
-        </div>
-      </div>
+    <div className={styles.landingRoot}>
       <LanguageSwitcher />
       <header
         className={styles.hero}
@@ -451,7 +344,7 @@ const WeddingLandingClient = (): ReactNode => {
           <h1 className={styles.heroNames}>
             <span className={styles.heroNameLine1}>{t('weddingLanding.hero.nameLine1')}</span>
             <span className={styles.heroNameLine2}>
-              <span className={styles.heroAmp}>&</span>
+              <span className={styles.heroAmp}>и</span>
               {t('weddingLanding.hero.nameLine2')}
             </span>
           </h1>

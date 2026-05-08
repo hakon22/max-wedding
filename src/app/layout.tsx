@@ -5,17 +5,9 @@ import { ConfigProvider } from 'antd';
 import ruRU from 'antd/locale/ru_RU';
 import {
   Cormorant_Garamond,
-  Comfortaa,
-  EB_Garamond,
   Geist,
   Geist_Mono,
-  Merriweather,
   Montserrat,
-  Neucha,
-  Nunito_Sans,
-  Philosopher,
-  Playfair_Display,
-  Spectral,
 } from 'next/font/google';
 
 import '@/app/globals.css';
@@ -41,62 +33,10 @@ const weddingSerif = Cormorant_Garamond({
 });
 
 /** Строка даты в герое: лёгкий гротеск с широким трекингом, как в моб. макете */
-const heroDateSans = Montserrat({
+const weddingBodySans = Montserrat({
   subsets: ['latin', 'cyrillic'],
-  variable: '--font-hero-date',
+  variable: '--font-wedding-body-base',
   weight: ['300', '400'],
-  display: 'swap',
-});
-
-/** Временные варианты шрифта заголовков — панель превью для заказчика */
-const weddingPreviewPlayfair = Playfair_Display({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-wedding-choice-playfair',
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-});
-const weddingPreviewEbGaramond = EB_Garamond({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-wedding-choice-eb-garamond',
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-});
-const weddingPreviewSpectral = Spectral({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-wedding-choice-spectral',
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-});
-const weddingPreviewPhilosopher = Philosopher({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-wedding-choice-philosopher',
-  weight: ['400', '700'],
-  display: 'swap',
-});
-
-/** Временные варианты основного текста — панель превью */
-const bodyPreviewMerriweather = Merriweather({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-body-choice-merriweather',
-  weight: ['300', '400', '700', '900'],
-  display: 'swap',
-});
-const bodyPreviewNunitoSans = Nunito_Sans({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-body-choice-nunito-sans',
-  weight: ['300', '400', '500', '600', '700'],
-  display: 'swap',
-});
-const bodyPreviewComfortaa = Comfortaa({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-body-choice-comfortaa',
-  weight: ['300', '400', '500', '600', '700'],
-  display: 'swap',
-});
-const bodyPreviewNeucha = Neucha({
-  subsets: ['latin', 'cyrillic'],
-  variable: '--font-body-choice-neucha',
-  weight: ['400'],
   display: 'swap',
 });
 
@@ -127,7 +67,7 @@ const RootLayout = ({ children }: { children: ReactNode }): ReactNode => {
   return (
     <html
       lang="ru"
-      className={`${geist.variable} ${geistMono.variable} ${weddingSerif.variable} ${heroDateSans.variable} ${weddingPreviewPlayfair.variable} ${weddingPreviewEbGaramond.variable} ${weddingPreviewSpectral.variable} ${weddingPreviewPhilosopher.variable} ${bodyPreviewMerriweather.variable} ${bodyPreviewNunitoSans.variable} ${bodyPreviewComfortaa.variable} ${bodyPreviewNeucha.variable}`}
+      className={`${geist.variable} ${geistMono.variable} ${weddingSerif.variable} ${weddingBodySans.variable}`}
     >
       <body>
         <AntdRegistry>
