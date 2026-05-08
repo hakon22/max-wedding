@@ -41,6 +41,15 @@ type TelegramGlobal = {
   };
 };
 
+type MiniAppDebugInfo = {
+  hasTelegram: boolean;
+  hasWebApp: boolean;
+  initDataSource: 'webapp' | 'location' | 'none';
+  initDataLength: number;
+  locationHasTgWebAppData: boolean;
+  userAgent: string;
+};
+
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -66,23 +75,48 @@ const getInitDataFromLocation = (): string | null => {
   return fromSource(window.location.hash) ?? fromSource(window.location.search);
 };
 
-const resolveTelegramInitData = async (): Promise<string | null> => {
+const resolveTelegramInitData = async (): Promise<{ initData: string | null; debug: MiniAppDebugInfo }> => {
   const timeoutAt = Date.now() + 3500;
+  let source: MiniAppDebugInfo['initDataSource'] = 'none';
+  let initData: string | null = null;
   while (Date.now() < timeoutAt) {
-    const webApp = (window as unknown as TelegramGlobal).Telegram?.WebApp;
+    const tg = (window as unknown as TelegramGlobal).Telegram;
+    const webApp = tg?.WebApp;
     webApp?.ready?.();
     webApp?.expand?.();
     const direct = webApp?.initData?.trim();
     if (direct) {
-      return direct;
+      initData = direct;
+      source = 'webapp';
+      break;
     }
     const fromLocation = getInitDataFromLocation();
     if (fromLocation) {
-      return fromLocation;
+      initData = fromLocation;
+      source = 'location';
+      break;
     }
     await sleep(120);
   }
-  return getInitDataFromLocation();
+  if (!initData) {
+    const fallback = getInitDataFromLocation();
+    if (fallback) {
+      initData = fallback;
+      source = 'location';
+    }
+  }
+  const hasTelegram = Boolean((window as unknown as TelegramGlobal).Telegram);
+  const hasWebApp = Boolean((window as unknown as TelegramGlobal).Telegram?.WebApp);
+  const locationHasTgWebAppData = Boolean(getInitDataFromLocation());
+  const debug: MiniAppDebugInfo = {
+    hasTelegram,
+    hasWebApp,
+    initDataSource: source,
+    initDataLength: initData?.length ?? 0,
+    locationHasTgWebAppData,
+    userAgent: navigator.userAgent,
+  };
+  return { initData, debug };
 };
 
 type MenuKindSectionProps = {
@@ -310,6 +344,7 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
   const [catalog, setCatalog] = useState<MenuCatalogDto>({ mainCourses: [], drinks: [] });
   const [loading, setLoading] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<MiniAppDebugInfo | null>(null);
 
   const authHeaders = useMemo(
     () => (token ? { Authorization: `Bearer ${token}` } : undefined),
@@ -328,7 +363,9 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
 
   useEffect(() => {
     const run = async (): Promise<void> => {
-      const initData = await resolveTelegramInitData();
+      const { initData, debug } = await resolveTelegramInitData();
+      setDebugInfo(debug);
+      console.info('[miniapp-debug] bootstrap', debug);
       if (!initData) {
         setBootError('Mini App должен быть открыт через WebApp-кнопку Telegram (/miniapp).');
         return;
@@ -341,6 +378,10 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
           error?: string;
         }>('/api/telegram-miniapp/auth', { initData });
         if (!authResponse.data.ok || !authResponse.data.token) {
+          console.info('[miniapp-debug] auth rejected', {
+            error: authResponse.data.error,
+            initDataLength: initData.length,
+          });
           setBootError(authResponse.data.error ?? 'Не удалось пройти авторизацию');
           return;
         }
@@ -349,9 +390,18 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
         const fallback = 'Ошибка авторизации Mini App';
         if (isAxiosError(error) && error.response?.data && typeof error.response.data === 'object') {
           const payload = error.response.data as { error?: string };
+          console.info('[miniapp-debug] auth axios error', {
+            status: error.response.status,
+            error: payload.error,
+            initDataLength: initData.length,
+          });
           setBootError(payload.error ?? fallback);
           return;
         }
+        console.info('[miniapp-debug] auth unknown error', {
+          initDataLength: initData.length,
+          error: error instanceof Error ? error.message : String(error),
+        });
         setBootError(fallback);
       } finally {
         setLoading(false);
@@ -399,7 +449,24 @@ export const TelegramMiniAppMenuAdminClient = (): ReactNode => {
     return (
       <main className={styles.page}>
         <Card title="Меню администратора" className={styles.mainCard}>
-          <Text type="danger">{bootError}</Text>
+          <Space direction="vertical" size={8} style={{ width: '100%' }}>
+            <Text type="danger">{bootError}</Text>
+            {debugInfo ? (
+              <Text code className={styles.debugText}>
+                {JSON.stringify(
+                  {
+                    hasTelegram: debugInfo.hasTelegram,
+                    hasWebApp: debugInfo.hasWebApp,
+                    initDataSource: debugInfo.initDataSource,
+                    initDataLength: debugInfo.initDataLength,
+                    locationHasTgWebAppData: debugInfo.locationHasTgWebAppData,
+                  },
+                  null,
+                  2,
+                )}
+              </Text>
+            ) : null}
+          </Space>
         </Card>
       </main>
     );

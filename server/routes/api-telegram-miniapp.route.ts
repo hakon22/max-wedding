@@ -69,7 +69,17 @@ export class ApiTelegramMiniAppRoute extends BaseRouter {
     router.post('/api/telegram-miniapp/auth', (req: Request, res: Response) => {
       const run = async (): Promise<void> => {
         const initData = await yup.string().trim().required().validate(req.body?.initData);
+        this.loggerService.info('telegram-miniapp-auth-attempt', {
+          initDataLength: initData.length,
+          userAgent: req.header('user-agent') ?? null,
+          referer: req.header('referer') ?? null,
+          hasTelegramHeader: Boolean(req.header('x-telegram-init-data')),
+        });
         const session = await this.miniAppAuthService.authenticateAdmin(initData);
+        this.loggerService.info('telegram-miniapp-auth-success', {
+          userId: session.user.id,
+          telegramId: session.user.telegramId,
+        });
         res.json({
           ok: true,
           token: session.token,
@@ -84,10 +94,20 @@ export class ApiTelegramMiniAppRoute extends BaseRouter {
       };
       run().catch((error) => {
         if (error instanceof TelegramMiniAppAuthError) {
+          this.loggerService.warn('telegram-miniapp-auth-rejected', {
+            statusCode: error.statusCode,
+            message: error.message,
+            userAgent: req.header('user-agent') ?? null,
+            referer: req.header('referer') ?? null,
+          });
           res.status(error.statusCode).json({ ok: false, error: error.message });
           return;
         }
         if (error instanceof yup.ValidationError) {
+          this.loggerService.warn('telegram-miniapp-auth-invalid-body', {
+            errors: error.errors,
+            userAgent: req.header('user-agent') ?? null,
+          });
           res.status(400).json({ ok: false, error: error.errors.join(' ') });
           return;
         }

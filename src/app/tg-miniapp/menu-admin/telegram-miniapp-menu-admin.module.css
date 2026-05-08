@@ -39,6 +39,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.debugText {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 8px;
