@@ -595,7 +595,6 @@ const WeddingLandingClient = (): ReactNode => {
       <section
         ref={videoSectionRef}
         className={styles.videoSection}
-        aria-labelledby="wedding-video-heading"
       >
         <div className={styles.videoWrap}>
           <video
@@ -609,20 +608,6 @@ const WeddingLandingClient = (): ReactNode => {
           >
             <source src={weddingSiteConfig.videoSrc} type={weddingSiteConfig.videoMimeType} />
           </video>
-          <div className={styles.videoOverlay}>
-            <div className={styles.videoOverlayHeader}>
-              <h2 id="wedding-video-heading" className={styles.videoOverlayTop}>
-                {t('weddingLanding.video.overlay.top')}
-              </h2>
-              <div className={styles.videoOverlayRule} aria-hidden />
-            </div>
-            <div className={styles.videoOverlayMain}>
-              <p className={styles.videoOverlayWithLove}>{t('weddingLanding.video.overlay.withLove')}</p>
-              <p className={styles.videoOverlayNameLarge}>{t('weddingLanding.video.overlay.nameFirst')}</p>
-              <p className={styles.videoOverlayConj}>{t('weddingLanding.video.overlay.conjunction')}</p>
-              <p className={styles.videoOverlayNameLarge}>{t('weddingLanding.video.overlay.nameSecond')}</p>
-            </div>
-          </div>
         </div>
       </section>
     </div>
