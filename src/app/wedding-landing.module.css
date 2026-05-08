@@ -218,63 +218,29 @@
   text-align: center;
 }
 
-/*
- * Переход между блоками: тонкие горизонтали по бокам + сердце по центру
- * (кроме первой секции внутри .page).
- */
-.page > section:not(:first-of-type)::before {
-  content: '';
-  display: block;
-  width: 100%;
-  height: clamp(36px, 8vw, 48px);
-  margin-bottom: 6px;
-  background-repeat: no-repeat;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23a85f70' fill-opacity='0.72' d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E"),
-    linear-gradient(
-      90deg,
-      rgba(74, 55, 48, 0.14) 0%,
-      rgba(74, 55, 48, 0.14) 31%,
-      transparent 31%,
-      transparent 69%,
-      rgba(74, 55, 48, 0.14) 69%,
-      rgba(74, 55, 48, 0.14) 100%
-    );
-  background-size:
-    clamp(22px, 6vw, 28px) auto,
-    100% 1px;
-  background-position:
-    center 50%,
-    center 50%;
+/* Воздушный промежуток между блоками, чтобы секции не слипались визуально */
+.page > .section + .section {
+  margin-top: clamp(18px, 4vw, 34px);
+  padding-top: clamp(12px, 2.8vw, 20px);
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  .page > section:not(:first-of-type)::before {
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23904a5c' d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E"),
-      linear-gradient(
-        90deg,
-        rgba(74, 55, 48, 0.2) 0%,
-        rgba(74, 55, 48, 0.2) 31%,
-        transparent 31%,
-        transparent 69%,
-        rgba(74, 55, 48, 0.2) 69%,
-        rgba(74, 55, 48, 0.2) 100%
-      );
-  }
-}
-
-/* Вертикальная линия как в референсе — только над первой секцией */
-.page > section:first-of-type .sectionTitle::before {
+.page > .section + .section::before {
   content: '';
   display: block;
-  width: 1px;
-  height: 28px;
-  margin: 0 auto 18px;
-  background: #1a1a1a;
+  width: min(88%, 620px);
+  height: clamp(12px, 2.2vw, 16px);
+  margin: 0 auto clamp(14px, 3.2vw, 22px);
+  border-radius: 999px;
+  background:
+    radial-gradient(80% 100% at 50% 50%, rgba(125, 102, 92, 0.1) 0%, rgba(125, 102, 92, 0.04) 52%, transparent 100%);
+  pointer-events: none;
 }
 
 .sectionTitle {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 3vw, 24px);
   margin-bottom: 20px !important;
   margin-top: 0 !important;
   font-family: var(--font-wedding-display), 'Cormorant Garamond', Georgia, serif !important;
@@ -283,6 +249,16 @@
   letter-spacing: 0.16em !important;
   text-transform: uppercase !important;
   color: #1a1a1a !important;
+}
+
+.sectionTitle::before,
+.sectionTitle::after {
+  content: '';
+  flex: 1 1 0;
+  min-width: 56px;
+  max-width: 280px;
+  height: 1px;
+  background: rgba(26, 26, 26, 0.2);
 }
 
 .intro {
