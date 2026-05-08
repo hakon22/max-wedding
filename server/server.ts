@@ -9,6 +9,7 @@ import { Container } from 'typescript-ioc';
 
 import { telegramWebhookAccessMiddleware } from '@server/middleware/telegram-webhook-access.middleware';
 import { ApiSubmissionRoute } from '@server/routes/api-submission.route';
+import { ApiTelegramMiniAppRoute } from '@server/routes/api-telegram-miniapp.route';
 import { BaseService } from '@server/services/app/base-service';
 import { LoggerService } from '@server/services/app/logger-service';
 import { TelegramBotService } from '@server/telegram/telegram-bot.service';
@@ -20,6 +21,8 @@ const port = Number(process.env.PORT) || 3015;
  */
 class WeddingServer extends BaseService {
   private readonly apiSubmissionRoute = Container.get(ApiSubmissionRoute);
+
+  private readonly apiTelegramMiniAppRoute = Container.get(ApiTelegramMiniAppRoute);
 
   private readonly telegramBotService = Container.get(TelegramBotService);
 
@@ -69,6 +72,7 @@ class WeddingServer extends BaseService {
 
     const submissionApiRouter = express.Router();
     this.apiSubmissionRoute.set(submissionApiRouter);
+    this.apiTelegramMiniAppRoute.set(submissionApiRouter);
     this.expressApplication.use(submissionApiRouter);
     this.expressApplication.all('*', (request, response) => {
       return this.nextRequestHandler(request, response);

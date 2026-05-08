@@ -47,6 +47,14 @@ const formatCreatedRu = (date: Date): string =>
  */
 @Singleton
 export class TelegramWeddingBotCommandsService extends BaseService {
+  private getMiniAppAdminUrl = (): string | null => {
+    const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, '');
+    if (!appBaseUrl) {
+      return null;
+    }
+    return `${appBaseUrl}/tg-miniapp/menu-admin`;
+  };
+
   private readonly tag = 'TelegramWeddingBotCommandsService';
 
   private readonly telegramUserService = Container.get(TelegramUserService);
@@ -82,7 +90,8 @@ export class TelegramWeddingBotCommandsService extends BaseService {
               '🤵‍♂️💍 <b>Админ-бот свадьбы</b>',
               '',
               '<b>Команды</b>',
-              '• /menu — меню блюд/напитков',
+              '• /miniapp — открыть Mini App редактор меню',
+              '• /menu — редактор меню прямо в чате (резервное меню)',
               '• /list — последние заявки',
               '• /last — последняя заявка',
               '• /summary — сводка',
@@ -107,6 +116,22 @@ export class TelegramWeddingBotCommandsService extends BaseService {
     bot.command('menu', async (context) => {
       await this.runAdminCommand(context, bot, async () => this.buildAdminMenuRootText(), {
         replyMarkup: this.getMenuRootKeyboard().reply_markup,
+      });
+    });
+
+    bot.command('miniapp', async (context) => {
+      await this.runAdminCommand(context, bot, async () => {
+        const miniAppUrl = this.getMiniAppAdminUrl();
+        if (!miniAppUrl) {
+          return 'Mini App URL не настроен. Укажите NEXT_PUBLIC_APP_URL.';
+        }
+        return [
+          '📱 <b>Mini App редактор меню</b>',
+          '',
+          `<a href="${escapeHtml(miniAppUrl)}">Открыть Mini App</a>`,
+          '',
+          'Если ссылка не открывается как Mini App, добавьте её в BotFather (Web App URL).',
+        ].join('\n');
       });
     });
 
@@ -379,11 +404,12 @@ export class TelegramWeddingBotCommandsService extends BaseService {
     return null;
   };
 
-  private getMenuRootKeyboard = () =>
-    Markup.inlineKeyboard([
+  private getMenuRootKeyboard = () => {
+    return Markup.inlineKeyboard([
       [Markup.button.callback('🍽 Основные блюда', 'menu:kind:main')],
       [Markup.button.callback('🥂 Напитки', 'menu:kind:drink')],
     ]);
+  };
 
   private getKindMenuKeyboard = (kind: MenuItemKind) => {
     const kindCode = this.kindCode(kind);
@@ -400,11 +426,14 @@ export class TelegramWeddingBotCommandsService extends BaseService {
     return [
       '🍽 <b>Редактор меню</b>',
       '',
+      this.getMiniAppAdminUrl() ? `📱 Mini App: ${this.getMiniAppAdminUrl()}` : null,
       `Основные блюда: <code>${catalog.mainCourses.length}</code>`,
       `Напитки: <code>${catalog.drinks.length}</code>`,
       '',
       'Выберите раздел:',
-    ].join('\n');
+    ]
+      .filter(Boolean)
+      .join('\n');
   };
 
   private renderMenuList = async (

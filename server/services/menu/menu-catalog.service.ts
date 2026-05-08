@@ -181,6 +181,37 @@ export class MenuCatalogService extends BaseService {
     return this.mapToDto(saved);
   };
 
+  public reorderMenuItems = async (kind: MenuItemKind, orderedIds: number[]): Promise<MenuItemDto[]> => {
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      throw new MenuCatalogValidationError('Список позиций для reorder пуст');
+    }
+    if (!orderedIds.every((id) => Number.isInteger(id) && id > 0)) {
+      throw new MenuCatalogValidationError('Некорректный список id для reorder');
+    }
+    if (new Set(orderedIds).size !== orderedIds.length) {
+      throw new MenuCatalogValidationError('Список id для reorder содержит дубликаты');
+    }
+    const repository = this.getRepository(kind);
+    const rows = await repository.find({
+      order: { order: 'ASC', id: 'ASC' },
+    });
+    if (rows.length !== orderedIds.length) {
+      throw new MenuCatalogValidationError('Список id должен содержать все позиции раздела');
+    }
+    const rowById = new Map(rows.map((row) => [row.id, row]));
+    for (const id of orderedIds) {
+      if (!rowById.has(id)) {
+        throw new MenuCatalogValidationError(`Позиция с id=${id} не найдена в выбранном разделе`);
+      }
+    }
+    orderedIds.forEach((id, index) => {
+      const row = rowById.get(id)!;
+      row.order = index;
+    });
+    await repository.save([...rowById.values()]);
+    return this.listByKind(kind, false);
+  };
+
   public ensureValidSelection = async (mainCourseId: number, drinkIds: number[]): Promise<void> => {
     if (!Number.isInteger(mainCourseId) || mainCourseId <= 0) {
       throw new MenuCatalogValidationError('Выбрано недопустимое основное блюдо');

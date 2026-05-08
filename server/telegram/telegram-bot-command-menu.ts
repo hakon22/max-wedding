@@ -6,6 +6,7 @@ export const TELEGRAM_BOT_COMMANDS_FOR_GUESTS = [
 /** Меню для пользователей с ролью ADMIN (в личке — scope `chat` с chat_id пользователя) */
 export const TELEGRAM_BOT_COMMANDS_FOR_ADMINS = [
   { command: 'start', description: 'Старт' },
+  { command: 'miniapp', description: 'Mini App редактор меню' },
   { command: 'menu', description: 'Меню блюд/напитков' },
   { command: 'list', description: 'Последние заявки' },
   { command: 'last', description: 'Последняя заявка' },
