@@ -362,14 +362,16 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
           } as CSSProperties
         }
       >
-        <Image
-          src={weddingSiteConfig.heroImageSrc}
-          alt=""
-          fill
-          priority
-          className={styles.heroImage}
-          sizes="100vw"
-        />
+        <div className={styles.heroImageMotion}>
+          <Image
+            src={weddingSiteConfig.heroImageSrc}
+            alt=""
+            fill
+            priority
+            className={styles.heroImage}
+            sizes="100vw"
+          />
+        </div>
         <div className={styles.heroOverlay} />
         <div className={styles.heroText}>
           <h1 className={styles.heroNames}>

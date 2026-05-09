@@ -111,17 +111,50 @@
   opacity: 0.5;
 }
 
-.heroImage {
+/* Обёртка: только blur — короткая плавная анимация, без стыков с zoom на img */
+.heroImageMotion {
   position: absolute;
   inset: 0;
   z-index: 2;
+  filter: blur(16px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .heroImageMotion {
+    animation: heroBlurOut 1.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroImageMotion {
+    filter: none;
+    animation: none;
+  }
+}
+
+.heroImage {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: var(--hero-object-position, center center);
-  opacity: 0;
-  transform: scale(1.03);
-  animation: heroFadeIn 1.35s ease-out 0.12s forwards;
+  opacity: 1;
+  transform: scale(1.26);
+  transform-origin: center center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .heroImage {
+    animation: heroZoomOut 6.75s cubic-bezier(0.08, 0.62, 0.12, 1) forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroImage {
+    transform: none;
+    animation: none;
+  }
 }
 
 /* Мобильный герой: пара по центру кадра, как в макете (cover + center) */
@@ -138,9 +171,14 @@
   }
 }
 
-@keyframes heroFadeIn {
+@keyframes heroBlurOut {
   to {
-    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes heroZoomOut {
+  to {
     transform: scale(1);
   }
 }
