@@ -241,6 +241,7 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
   const dressCodeRevealDoneRef = useRef(false);
   const [isDressCodeVisible, setIsDressCodeVisible] = useState(false);
   const [isDressCodeNapkinHovered, setIsDressCodeNapkinHovered] = useState(false);
+  const [isWeddingVideoSurfaceReady, setIsWeddingVideoSurfaceReady] = useState(false);
   const showDressCodePalette = isDressCodeVisible;
   const mainCourseOptions = useMemo(
     () =>
@@ -278,6 +279,46 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
     );
     observer.observe(video);
     return () => observer.disconnect();
+  }, []);
+
+  /**
+   * Ролик внизу страницы: не тянем байты на первом экране (preload="none"),
+   * затем после window.load и в idle поднимаем preload до auto — буфер к моменту скролла.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    const kickPreload = (): void => {
+      const el = weddingVideoRef.current;
+      if (cancelled || !el) {
+        return;
+      }
+      el.preload = 'auto';
+      el.load();
+    };
+
+    const schedulePreload = (): void => {
+      if (cancelled) {
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === 'function') {
+        ric(() => kickPreload(), { timeout: 5000 });
+      } else {
+        window.setTimeout(kickPreload, 2500);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      schedulePreload();
+    } else {
+      window.addEventListener('load', schedulePreload, { once: true });
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('load', schedulePreload);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -704,15 +745,35 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
         ref={videoSectionRef}
         className={styles.videoSection}
       >
-        <div className={styles.videoWrap}>
+        <div
+          className={styles.videoWrap}
+          style={
+            {
+              '--wedding-video-aspect-w': weddingSiteConfig.videoLayoutHintWidth,
+              '--wedding-video-aspect-h': weddingSiteConfig.videoLayoutHintHeight,
+            } as CSSProperties
+          }
+        >
+          {!isWeddingVideoSurfaceReady && (
+            <Image
+              src={weddingSiteConfig.videoPosterSrc}
+              alt=""
+              aria-hidden
+              fill
+              sizes="(max-width: 767px) 100vw, 720px"
+              quality={75}
+              className={styles.videoPoster}
+            />
+          )}
           <video
             ref={weddingVideoRef}
             className={styles.video}
             loop
             muted
             playsInline
-            preload="metadata"
-            poster={weddingSiteConfig.videoPosterSrc}
+            preload="none"
+            style={{ opacity: isWeddingVideoSurfaceReady ? 1 : 0 }}
+            onLoadedData={() => setIsWeddingVideoSurfaceReady(true)}
           >
             <source src={weddingSiteConfig.videoSrc} type={weddingSiteConfig.videoMimeType} />
           </video>

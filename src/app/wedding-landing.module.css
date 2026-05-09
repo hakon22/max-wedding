@@ -1223,18 +1223,43 @@
 
 .videoWrap {
   position: relative;
-  margin-top: 0;
+  display: inline-block;
+  vertical-align: top;
   overflow: hidden;
   background: #0a0a0a;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
+  /*
+   * --wedding-video-aspect-w / --wedding-video-aspect-h приходят инлайном из конфига.
+   * Обёртка имеет высоту до 70vh, ширина пересчитывается из аспекта ролика.
+   * max-height по натуральной высоте — чтобы на больших экранах видео и постер
+   * не масштабировались выше своего «родного» размера.
+   * Центрирование — через text-align: center у .videoSection (родителя).
+   */
+  height: 70vh;
+  max-height: calc(var(--wedding-video-aspect-h, 1280) * 1px);
+  aspect-ratio: var(--wedding-video-aspect-w, 720) / var(--wedding-video-aspect-h, 1280);
+  max-width: 100%;
+}
+
+.videoPoster {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  object-fit: cover;
+  transition: opacity 0.35s ease;
 }
 
 .video {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   width: 100%;
+  height: 100%;
   display: block;
-  max-height: 70vh;
+  object-fit: cover;
+  transition: opacity 0.35s ease;
 }
 
 @media (max-width: 767px) {
@@ -1253,21 +1278,17 @@
   }
 
   .videoWrap {
-    margin-top: 0;
-    margin-left: 0;
-    margin-right: 0;
+    display: block;
+    margin: 0;
     max-width: none;
     width: 100%;
     height: min(100dvh, 100svh);
     max-height: min(100dvh, 100svh);
+    /* На мобильных кадр — на весь экран, аспект ролика не диктует размер. */
+    aspect-ratio: auto;
   }
 
   .video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
     max-height: none;
-    object-fit: cover;
   }
 }

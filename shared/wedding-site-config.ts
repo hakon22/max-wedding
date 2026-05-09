@@ -15,6 +15,12 @@ export const weddingSiteConfig = {
   videoSrc: '/wedding/video.mp4',
   videoMimeType: 'video/mp4',
   videoPosterSrc: '/wedding/video-poster.jpg',
+  /**
+   * Подсказка соотношения сторон для резерва места до метаданных ролика (как у постера).
+   * Если кадр другой — поправьте, чтобы не было скачка вёрстки.
+   */
+  videoLayoutHintWidth: 720,
+  videoLayoutHintHeight: 1280,
   /** Ссылка на карточку организации (сайт, шаринг) */
   mapsUrl:
     'https://yandex.ru/maps/org/bereg_zhelaniy/64977620779?si=t24hjtzzzqwz493a5v7ybnhufg',
