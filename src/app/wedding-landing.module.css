@@ -619,20 +619,145 @@
   height: auto;
 }
 
-/* Зона салфетки: верхний правый сектор кадра (pointer-events только там) */
+/*
+ * Зона салфетки (ПК): полный слой + clip-path — хит только по белой салфетке
+ * вверху справа, не по всему прямоугольнику. Проценты от кадра dress-code.jpeg (16:9).
+ * При смене кропа фото подправьте вершины полигона.
+ */
 .dressCodeNapkinHit {
   position: absolute;
-  top: 0;
-  right: 0;
-  width: min(52%, 380px);
-  height: min(46%, 320px);
-  z-index: 2;
+  inset: 0;
+  z-index: 4;
   cursor: default;
+  -webkit-clip-path: polygon(
+    33% 0%,
+    100% 0%,
+    100% 54%,
+    76% 49%,
+    61% 44%,
+    47% 32%,
+    38% 18%,
+    33% 4%
+  );
+  clip-path: polygon(
+    33% 0%,
+    100% 0%,
+    100% 54%,
+    76% 49%,
+    61% 44%,
+    47% 32%,
+    38% 18%,
+    33% 4%
+  );
+}
+
+/* Слой поверх фото: ряд по центру кадра, без портала */
+.dressCodeNapkinHoverLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: clamp(8px, 2vw, 20px);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.32s ease,
+    visibility 0.32s ease;
+}
+
+.dressCodeNapkinHoverLayerVisible {
+  opacity: 1;
+  visibility: visible;
+}
+
+@keyframes dressCodeNapkinOverlayRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * clamp(12px, 2.5vw, 24px)));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Плашка поверх фото: фон + скругление; анимация на ней целиком */
+.dressCodeNapkinHoverPanel {
+  pointer-events: none;
+  border-radius: 14px;
+  padding: clamp(14px, 2.2vw, 24px) clamp(18px, 2.8vw, 32px);
+  background: rgba(255, 252, 248, 0.9);
+  border: 1px solid rgba(72, 62, 48, 0.14);
+  box-shadow:
+    0 12px 36px rgba(28, 26, 22, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.72) inset;
+  -webkit-backdrop-filter: blur(12px) saturate(1.06);
+  backdrop-filter: blur(12px) saturate(1.06);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dressCodeNapkinHoverPanel {
+    background: rgba(255, 252, 248, 0.97);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.dressCodeNapkinHoverLayer:not(.dressCodeNapkinHoverLayerVisible) .dressCodeNapkinHoverPanel {
+  animation: none;
+  opacity: 0;
+  transform: translateY(calc(-1 * clamp(8px, 1.5vw, 16px)));
+}
+
+.dressCodeNapkinHoverLayerVisible .dressCodeNapkinHoverPanel {
+  animation: dressCodeNapkinOverlayRowIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.dressCodeNapkinHoverRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  gap: clamp(14px, 3.2vw, 44px);
+  pointer-events: none;
+}
+
+.dressCodeNapkinHoverItem {
+  flex: 0 0 auto;
+  width: clamp(56px, 8vw, 104px);
+  line-height: 0;
+}
+
+.dressCodeNapkinHoverImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
 }
 
 @media (hover: none) {
   .dressCodeNapkinHit {
     display: none;
+  }
+
+  .dressCodeNapkinHoverLayer {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dressCodeNapkinHoverLayerVisible .dressCodeNapkinHoverPanel {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 
@@ -653,7 +778,7 @@
   line-height: 1.66 !important;
   color: #f8faf7 !important;
   text-wrap: balance;
-  z-index: 1;
+  z-index: 3;
   text-shadow:
     0 0 1px rgba(0, 0, 0, 0.55),
     0 1px 3px rgba(0, 0, 0, 0.45),

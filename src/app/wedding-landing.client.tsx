@@ -241,7 +241,7 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
   const dressCodeRevealDoneRef = useRef(false);
   const [isDressCodeVisible, setIsDressCodeVisible] = useState(false);
   const [isDressCodeNapkinHovered, setIsDressCodeNapkinHovered] = useState(false);
-  const showDressCodePalette = isDressCodeVisible || isDressCodeNapkinHovered;
+  const showDressCodePalette = isDressCodeVisible;
   const mainCourseOptions = useMemo(
     () =>
       menuCatalog.mainCourses.map((mainCourse) => ({
@@ -502,13 +502,38 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
                   className={styles.dressCodeHeroImage}
                   sizes="(max-width: 768px) 92vw, 760px"
                 />
-                {/* Зона белой салфетки (верхний правый угол кадра) — на десктопе с hover раскрывает палитру */}
+                {/* ПК: салфетка открывает ряд иконок по центру кадра, поверх фото; палитра под кадром — только по скроллу */}
                 <div
                   className={styles.dressCodeNapkinHit}
                   aria-hidden
                   onMouseEnter={() => setIsDressCodeNapkinHovered(true)}
                   onMouseLeave={() => setIsDressCodeNapkinHovered(false)}
                 />
+                <div
+                  className={`${styles.dressCodeNapkinHoverLayer} ${
+                    isDressCodeNapkinHovered ? styles.dressCodeNapkinHoverLayerVisible : ''
+                  }`}
+                  aria-hidden
+                >
+                  <div className={styles.dressCodeNapkinHoverPanel}>
+                    <div className={styles.dressCodeNapkinHoverRow}>
+                      {DRESS_CODE_IMAGES.map((imageSrc) => (
+                        <div key={`napkin-${imageSrc}`} className={styles.dressCodeNapkinHoverItem}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={imageSrc}
+                            alt=""
+                            width={220}
+                            height={220}
+                            className={styles.dressCodeNapkinHoverImage}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 <Paragraph className={styles.dressCodeIntro}>{t('weddingLanding.dressCode.intro')}</Paragraph>
               </div>
             </div>
