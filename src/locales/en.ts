@@ -83,7 +83,7 @@ const enResources = {
           body: 'If you would like to give us something valuable and useful, we would be very grateful for a contribution to our young family’s budget.',
         },
       ],
-      formDeadlineLabel: 'Please confirm attendance and complete the form by 31 May 2026.',
+      formDeadlineLabel: 'Please confirm attendance and complete the form by 30 June 2026.',
       form: {
         guestNameLabel: 'Your name',
         guestNamePlaceholder: 'First and last name',
