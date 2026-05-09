@@ -693,7 +693,7 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
           <video
             ref={weddingVideoRef}
             className={styles.video}
-            controls
+            loop
             muted
             playsInline
             preload="metadata"
