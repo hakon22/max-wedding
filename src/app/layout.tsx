@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     nocache: true,
     googleBot: { index: false, follow: false, noimageindex: true },
   },
-  title: 'Свадьба',
+  title: 'Свадьба Дарьи и Максима',
   description: 'Информация о мероприятии и ответы гостей',
   manifest: '/site.webmanifest',
   icons: {
