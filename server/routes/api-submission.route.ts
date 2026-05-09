@@ -8,6 +8,7 @@ import { AdminSubmissionNotifyService } from '@server/services/guest/admin-submi
 import { GuestSubmissionService } from '@server/services/guest/guest-submission.service';
 import { LoggerService } from '@server/services/app/logger-service';
 import { MenuCatalogService, MenuCatalogValidationError } from '@server/services/menu/menu-catalog.service';
+import { WeddingSiteSettingsService } from '@server/services/site/wedding-site-settings.service';
 import { DeveloperNotifyService } from '@server/telegram/developer-notify.service';
 import { guestSubmissionRequestSchema } from '@shared/guest-submission.schema';
 
@@ -24,6 +25,8 @@ export class ApiSubmissionRoute extends BaseRouter {
   private readonly loggerService = Container.get(LoggerService);
 
   private readonly menuCatalogService = Container.get(MenuCatalogService);
+
+  private readonly weddingSiteSettingsService = Container.get(WeddingSiteSettingsService);
 
   public set = (router: Router): void => {
     /**
@@ -98,6 +101,21 @@ export class ApiSubmissionRoute extends BaseRouter {
         const normalizedError = error instanceof Error ? error : new Error(String(error));
         this.loggerService.error('menu-options', normalizedError);
         res.status(500).json({ ok: false, error: 'Не удалось получить меню' });
+      });
+    });
+
+    /**
+     * Публичные флаги оформления лендинга (SSR)
+     */
+    router.get('/api/site-display-settings', (_req: Request, res: Response) => {
+      const run = async (): Promise<void> => {
+        const heartsBackgroundEnabled = await this.weddingSiteSettingsService.getHeartsBackgroundEnabled();
+        res.json({ ok: true, heartsBackgroundEnabled });
+      };
+      run().catch((error) => {
+        const normalizedError = error instanceof Error ? error : new Error(String(error));
+        this.loggerService.error('site-display-settings', normalizedError);
+        res.status(500).json({ ok: false, error: 'Не удалось получить настройки' });
       });
     });
   };

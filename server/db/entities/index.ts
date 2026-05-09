@@ -3,6 +3,7 @@ import { GuestSubmissionEntity } from '@server/db/entities/guest-submission.enti
 import { MenuDrinkEntity } from '@server/db/entities/menu-drink.entity';
 import { MenuMainCourseEntity } from '@server/db/entities/menu-main-course.entity';
 import { UserEntity } from '@server/db/entities/user.entity';
+import { WeddingSiteSettingEntity } from '@server/db/entities/wedding-site-setting.entity';
 
 export const entities = [
   UserEntity,
@@ -10,4 +11,5 @@ export const entities = [
   GuestSubmissionDrinkEntity,
   MenuMainCourseEntity,
   MenuDrinkEntity,
+  WeddingSiteSettingEntity,
 ];

@@ -1,4 +1,4 @@
-/* Референс: сериф-заголовки, аккуратные линии; фон — тёплый градиент и лёгкий паттерн сердечек */
+/* Референс: сериф-заголовки, аккуратные линии; фон — тёплый градиент; сердечки — класс .landingRootWithHearts (настройка в Telegram) */
 
 .landingRoot {
   position: relative;
@@ -16,7 +16,7 @@
 }
 
 /* Декоративные сердечки: слой на всю высоту лендинга, под контентом (см. public/wedding-hearts-bg.svg) */
-.landingRoot::before {
+.landingRootWithHearts::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -28,7 +28,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .landingRoot::before {
+  .landingRootWithHearts::before {
     animation: landingHeartsDrift 96s linear infinite;
   }
 }
@@ -49,7 +49,7 @@
   margin: 0 auto;
   padding: 32px clamp(18px, 4vw, 28px) 36px;
   font-family: var(--font-wedding-body), system-ui, sans-serif;
-  /* Панель над узором: читаемость без «тяжёлой» белой плашки */
+  /* Читаемость без «тяжёлой» белой плашки */
   background: rgba(255, 252, 248, 0.94);
   border: 1px solid rgba(88, 58, 50, 0.1);
   border-radius: 26px;
@@ -99,7 +99,7 @@
   background: #e8e6e3;
 }
 
-.hero::before {
+.heroWithHearts::before {
   content: '';
   position: absolute;
   inset: 0;

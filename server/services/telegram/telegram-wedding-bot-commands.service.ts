@@ -8,6 +8,7 @@ import { GuestSubmissionEntity } from '@server/db/entities/guest-submission.enti
 import { BaseService } from '@server/services/app/base-service';
 import { GuestSubmissionExcelService } from '@server/services/guest/guest-submission-excel.service';
 import { MenuCatalogService, MenuCatalogValidationError } from '@server/services/menu/menu-catalog.service';
+import { WeddingSiteSettingsService } from '@server/services/site/wedding-site-settings.service';
 import { TelegramUserService } from '@server/services/telegram/telegram-user.service';
 import { TELEGRAM_BOT_COMMANDS_FOR_ADMINS } from '@server/telegram/telegram-bot-command-menu';
 import type { MenuItemKind } from '@shared/menu-catalog';
@@ -63,6 +64,8 @@ export class TelegramWeddingBotCommandsService extends BaseService {
 
   private readonly menuCatalogService = Container.get(MenuCatalogService);
 
+  private readonly weddingSiteSettingsService = Container.get(WeddingSiteSettingsService);
+
   private readonly menuDraftByTelegramId = new Map<string, MenuDraft>();
 
   /**
@@ -91,6 +94,7 @@ export class TelegramWeddingBotCommandsService extends BaseService {
               '',
               '<b>Команды</b>',
               '• /miniapp — открыть Mini App редактор меню',
+              '• /settings — настройки сайта (сердечки на фоне и др.)',
               '• /menu — редактор меню прямо в чате (резервное меню)',
               '• /list — последние заявки',
               '• /last — последняя заявка',
@@ -151,6 +155,55 @@ export class TelegramWeddingBotCommandsService extends BaseService {
       } catch (error) {
         this.loggerService.error(this.tag, 'miniapp', error);
         await context.reply('Ошибка при открытии Mini App.');
+      }
+    });
+
+    bot.command('settings', async (context) => {
+      try {
+        if (!this.databaseService.getDataSource().isInitialized) {
+          await context.reply('База не готова');
+          return;
+        }
+        const user = await this.telegramUserService.ensureUserFromContext(context);
+        if (!this.telegramUserService.isActiveAdmin(user)) {
+          await context.reply('Нет прав. Доступ только для администраторов (роль ADMIN в базе).');
+          return;
+        }
+        const heartsBackgroundEnabled = await this.weddingSiteSettingsService.getHeartsBackgroundEnabled();
+        await context.reply(this.buildSiteSettingsPanelText(heartsBackgroundEnabled), {
+          parse_mode: 'HTML',
+          reply_markup: this.getSiteSettingsKeyboard(heartsBackgroundEnabled).reply_markup,
+        });
+      } catch (error) {
+        this.loggerService.error(this.tag, 'settings', error);
+        await context.reply('Ошибка при открытии настроек.');
+      }
+    });
+
+    bot.action(/^settings:toggle:hearts$/u, async (context) => {
+      await context.answerCbQuery().catch(() => undefined);
+      try {
+        if (!this.databaseService.getDataSource().isInitialized) {
+          await context.reply('База не готова');
+          return;
+        }
+        const user = await this.telegramUserService.ensureUserFromContext(context);
+        if (!this.telegramUserService.isActiveAdmin(user)) {
+          await context.reply('Нет прав. Доступ только для администраторов (роль ADMIN в базе).');
+          return;
+        }
+        const heartsBackgroundEnabled = await this.weddingSiteSettingsService.toggleHeartsBackgroundEnabled();
+        const text = this.buildSiteSettingsPanelText(heartsBackgroundEnabled);
+        const keyboard = this.getSiteSettingsKeyboard(heartsBackgroundEnabled);
+        await context.editMessageText(text, {
+          parse_mode: 'HTML',
+          reply_markup: keyboard.reply_markup,
+        }).catch(async () => {
+          await context.reply(text, { parse_mode: 'HTML', reply_markup: keyboard.reply_markup });
+        });
+      } catch (error) {
+        this.loggerService.error(this.tag, 'settings:toggle:hearts', error);
+        await context.reply('Не удалось сохранить настройку.');
       }
     });
 
@@ -422,6 +475,26 @@ export class TelegramWeddingBotCommandsService extends BaseService {
     }
     return null;
   };
+
+  private buildSiteSettingsPanelText = (heartsBackgroundEnabled: boolean): string =>
+    [
+      '⚙️ <b>Настройки сайта</b>',
+      '',
+      '<b>Сердечки на заднем фоне</b>',
+      heartsBackgroundEnabled ? 'Сейчас: <b>включено</b> ✅' : 'Сейчас: <b>выключено</b> ❌',
+      '',
+      '<i>Нажмите кнопку ниже, чтобы переключить.</i>',
+    ].join('\n');
+
+  private getSiteSettingsKeyboard = (heartsBackgroundEnabled: boolean) =>
+    Markup.inlineKeyboard([
+      [
+        Markup.button.callback(
+          heartsBackgroundEnabled ? '💔 Выключить сердечки' : '❤️ Включить сердечки',
+          'settings:toggle:hearts',
+        ),
+      ],
+    ]);
 
   private getMenuRootKeyboard = () => {
     return Markup.inlineKeyboard([

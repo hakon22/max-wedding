@@ -18,6 +18,7 @@ import {
 } from '@/lib/guest-submission-yup-form';
 import styles from '@/app/wedding-landing.module.css';
 import type { MenuCatalogDto } from '@shared/menu-catalog';
+import type { SiteDisplaySettingsDto } from '@shared/wedding-site-settings';
 import { weddingSiteConfig } from '@shared/wedding-site-config';
 
 const { TextArea } = Input;
@@ -47,6 +48,7 @@ type CalendarCell = {
 
 type WeddingLandingProps = {
   menuCatalog: MenuCatalogDto;
+  siteDisplaySettings: SiteDisplaySettingsDto;
 };
 
 /** Обводка ячейки в форме сердца (не сдвигает цифру — абсолютное позиционирование) */
@@ -224,7 +226,7 @@ const translateRawGuestSubmissionApiError = (raw: string, t: TFunction): string 
   return out;
 };
 
-const WeddingLandingClient = ({ menuCatalog }: WeddingLandingProps): ReactNode => {
+const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandingProps): ReactNode => {
   const { t, i18n } = useTranslation();
   const [form] = Form.useForm<GuestSubmissionFormValues>();
   const plansToAttend = Form.useWatch('plansToAttend', form);
@@ -347,11 +349,13 @@ const WeddingLandingClient = ({ menuCatalog }: WeddingLandingProps): ReactNode =
     }
   };
 
+  const heartsOn = siteDisplaySettings.heartsBackgroundEnabled;
+
   return (
-    <div className={styles.landingRoot}>
+    <div className={`${styles.landingRoot} ${heartsOn ? styles.landingRootWithHearts : ''}`}>
       <LanguageSwitcher />
       <header
-        className={styles.hero}
+        className={`${styles.hero} ${heartsOn ? styles.heroWithHearts : ''}`}
         style={
           {
             '--hero-object-position': weddingSiteConfig.heroImageObjectPosition,
@@ -630,10 +634,10 @@ const WeddingLandingClient = ({ menuCatalog }: WeddingLandingProps): ReactNode =
   );
 };
 
-const WeddingLanding = ({ menuCatalog }: WeddingLandingProps): ReactNode => {
+const WeddingLanding = ({ menuCatalog, siteDisplaySettings }: WeddingLandingProps): ReactNode => {
   return (
     <App>
-      <WeddingLandingClient menuCatalog={menuCatalog} />
+      <WeddingLandingClient menuCatalog={menuCatalog} siteDisplaySettings={siteDisplaySettings} />
     </App>
   );
 };
