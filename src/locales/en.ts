@@ -62,6 +62,12 @@ const enResources = {
           'We are eagerly waiting and preparing for our unforgettable day! Please support us with your smiles and warm hugs, and with beautiful outfits in the event color palette.',
         paletteNote:
           'The key shades of our wedding palette.',
+        paletteColors: {
+          choko: 'Brown',
+          currant: 'Red',
+          mint: 'Green',
+          raspberry: 'Beige',
+        },
       },
       wishesSlides: [
         {
