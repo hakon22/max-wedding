@@ -440,6 +440,15 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
             </Title>
             <Paragraph style={{ marginBottom: 8 }}>{t('weddingLanding.venue.addressLine1')}</Paragraph>
             <Paragraph style={{ marginBottom: 0 }}>{t('weddingLanding.venue.addressLine2')}</Paragraph>
+            <div className={styles.venueLocationPhoto}>
+              <Image
+                src="/wedding/location.JPG"
+                alt={t('weddingLanding.venue.locationPhotoAlt')}
+                fill
+                sizes="(max-width: 640px) calc(100vw - 48px), 520px"
+                className={styles.venueLocationPhotoImg}
+              />
+            </div>
             <Button
               type="primary"
               className={styles.venueMapButton}

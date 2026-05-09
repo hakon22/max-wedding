@@ -427,6 +427,19 @@
   text-align: center;
 }
 
+.venueLocationPhoto {
+  position: relative;
+  width: 100%;
+  margin-top: 16px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid #e8e8e8;
+}
+
+.venueLocationPhotoImg {
+  object-fit: cover;
+}
+
 .venueMapButton {
   position: relative;
   margin-top: 16px;
