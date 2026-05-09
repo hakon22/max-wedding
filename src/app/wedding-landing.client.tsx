@@ -1,7 +1,7 @@
 'use client';
 
 import type { CSSProperties, ReactNode } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { App, Button, Card, Carousel, Checkbox, Form, Input, Radio, Select, Typography, message } from 'antd';
 import { isAxiosError } from 'axios';
@@ -236,9 +236,12 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
   const timingItems = t('weddingLanding.timing', { returnObjects: true }) as unknown as TimingItem[];
   const weddingVideoRef = useRef<HTMLVideoElement>(null);
   const videoSectionRef = useRef<HTMLElement>(null);
-  const dressCodeSectionRef = useRef<HTMLElement>(null);
+  /** IO только на ряд ягод — иначе секция с заголовком срабатывает раньше, чем картинки в кадре */
+  const dressCodePaletteRevealRef = useRef<HTMLDivElement>(null);
+  const dressCodeRevealDoneRef = useRef(false);
   const [isDressCodeVisible, setIsDressCodeVisible] = useState(false);
-  const [isDressCodeHovered, setIsDressCodeHovered] = useState(false);
+  const [isDressCodeNapkinHovered, setIsDressCodeNapkinHovered] = useState(false);
+  const showDressCodePalette = isDressCodeVisible || isDressCodeNapkinHovered;
   const mainCourseOptions = useMemo(
     () =>
       menuCatalog.mainCourses.map((mainCourse) => ({
@@ -277,24 +280,52 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const section = dressCodeSectionRef.current;
-    if (!section) {
+  useLayoutEffect(() => {
+    const paletteEl = dressCodePaletteRevealRef.current;
+    if (!paletteEl) {
       return;
     }
-    const observer = new IntersectionObserver(
+
+    const ioRef: { current: IntersectionObserver | null } = { current: null };
+
+    const commitDressCodeReveal = (): void => {
+      if (dressCodeRevealDoneRef.current) {
+        return;
+      }
+      dressCodeRevealDoneRef.current = true;
+      ioRef.current?.disconnect();
+      ioRef.current = null;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsDressCodeVisible(true);
+        });
+      });
+    };
+
+    ioRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsDressCodeVisible(true);
-            observer.disconnect();
+          if (!entry.isIntersecting || entry.target !== paletteEl) {
+            return;
           }
+          /*
+           * На мобильных нельзя требовать большой intersectionRatio: у WebKit/Safari он
+           * нестабилен; плюс transform «вниз» на самом элементе сдвигает bounding box и IO
+           * может не сработать — см. CSS: скрытое состояние без translate на цели IO.
+           */
+          commitDressCodeReveal();
         });
       },
-      { threshold: 0.3, rootMargin: '0px 0px -10% 0px' },
+      { threshold: [0, 0.05, 0.12, 0.2], rootMargin: '0px 0px -8% 0px' },
     );
-    observer.observe(section);
-    return () => observer.disconnect();
+
+    ioRef.current.observe(paletteEl);
+
+    return () => {
+      ioRef.current?.disconnect();
+      ioRef.current = null;
+      dressCodeRevealDoneRef.current = false;
+    };
   }, []);
 
   const heroDateLine = formatHeroPhotoDateLine();
@@ -455,39 +486,54 @@ const WeddingLandingClient = ({ menuCatalog, siteDisplaySettings }: WeddingLandi
           </div>
         </section>
 
-        <section ref={dressCodeSectionRef} className={`${styles.section} ${styles.sectionDressCode}`}>
+        <section className={`${styles.section} ${styles.sectionDressCode}`}>
           <Title level={2} className={styles.sectionTitle}>
             {t('weddingLanding.sections.dressCode')}
           </Title>
-          <div
-            className={styles.dressCodeHero}
-            onMouseEnter={() => setIsDressCodeHovered(true)}
-            onMouseLeave={() => setIsDressCodeHovered(false)}
-          >
-            <Image
-              src="/wedding/dress-code.jpeg"
-              alt=""
-              aria-hidden
-              width={1600}
-              height={900}
-              className={styles.dressCodeHeroImage}
-              sizes="(max-width: 768px) 92vw, 760px"
-            />
-            <Paragraph className={styles.dressCodeIntro}>{t('weddingLanding.dressCode.intro')}</Paragraph>
-          </div>
-          <div
-            className={`${styles.dressCodePalette} ${isDressCodeVisible ? styles.dressCodePaletteVisible : ''} ${
-              isDressCodeHovered ? styles.dressCodePaletteHovered : ''
-            }`}
-            aria-hidden
-          >
-            {DRESS_CODE_IMAGES.map((imageSrc) => (
-              <div key={imageSrc} className={styles.dressCodePaletteItem}>
-                <Image src={imageSrc} alt="" width={210} height={210} className={styles.dressCodePaletteImage} />
+          <div className={styles.dressCodeHeroOuter}>
+            <div className={styles.dressCodeHero}>
+              <div className={styles.dressCodeHeroFigure}>
+                <Image
+                  src="/wedding/dress-code.jpeg"
+                  alt=""
+                  aria-hidden
+                  width={1600}
+                  height={900}
+                  className={styles.dressCodeHeroImage}
+                  sizes="(max-width: 768px) 92vw, 760px"
+                />
+                {/* Зона белой салфетки (верхний правый угол кадра) — на десктопе с hover раскрывает палитру */}
+                <div
+                  className={styles.dressCodeNapkinHit}
+                  aria-hidden
+                  onMouseEnter={() => setIsDressCodeNapkinHovered(true)}
+                  onMouseLeave={() => setIsDressCodeNapkinHovered(false)}
+                />
+                <Paragraph className={styles.dressCodeIntro}>{t('weddingLanding.dressCode.intro')}</Paragraph>
               </div>
-            ))}
+            </div>
+            <div
+              ref={dressCodePaletteRevealRef}
+              className={`${styles.dressCodePalette} ${showDressCodePalette ? styles.dressCodePaletteVisible : ''}`}
+            >
+              {DRESS_CODE_IMAGES.map((imageSrc) => (
+                <div key={imageSrc} className={styles.dressCodePaletteItem}>
+                  {/* next/image даёт span с фоном под оптимизацией — для PNG с альфой нужен нативный img */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageSrc}
+                    alt=""
+                    width={210}
+                    height={210}
+                    className={styles.dressCodePaletteImage}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              ))}
+              <Paragraph className={styles.dressCodePaletteNote}>{t('weddingLanding.dressCode.paletteNote')}</Paragraph>
+            </div>
           </div>
-          <Paragraph className={styles.dressCodePaletteNote}>{t('weddingLanding.dressCode.paletteNote')}</Paragraph>
         </section>
 
         <section className={styles.section}>
