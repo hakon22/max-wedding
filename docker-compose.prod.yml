@@ -7,7 +7,7 @@ services:
     command: migration:run:prod
     volumes:
       - /srv/logs:/srv/logs
-      - /var/www/veremevs.online/public:/app/public
+      - /var/www/veremevs.ru/public:/app/public
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -16,10 +16,10 @@ services:
     network_mode: "host"
     env_file: .env
     ports:
-      - "3016:3016"
+      - "3015:3015"
     volumes:
       - /srv/logs:/srv/logs
-      - /var/www/veremevs.online/public:/app/public
+      - /var/www/veremevs.ru/public:/app/public
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped

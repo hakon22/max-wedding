@@ -1,6 +1,6 @@
 # max-wedding
 
-Веб-приложение для свадебного лендинга: расписание, карта, медиа и **форма ответа гостей** (придёт / не придёт, меню, напитки, комментарии). Клиент на **Next.js** и **Ant Design**, сервер — **Express** с общим процессом Next, данные в **PostgreSQL** через **TypeORM**, опционально **Telegram-бот** (вебхук и уведомления).
+Веб-приложение для свадебного лендинга: расписание, карта, медиа и **форма ответа гостей** (придёт / не придёт, меню, напитки, комментарии). Клиент на **Next.js** и **Ant Design**, сервер — **Express** с общим процессом Next, данные в **PostgreSQL** через **TypeORM**, опционально **Telegram-бот** (вебхук, уведомления и **админка в личке** для управления меню, настройками сайта и заявками).
 
 Поддерживается **i18n** (русский по умолчанию, английский): ключи локализации в `src/locales/`.
 
@@ -17,7 +17,7 @@
 
 - **Node.js** 20+ (в Docker-образах используется Node 25)
 - **PostgreSQL**
-- Для продакшена: Docker и учётная запись Docker Hub (см. деплой)
+- Для продакшена: Docker, учётная запись Docker Hub и VPS с Docker (см. деплой)
 
 ## Локальная разработка
 
@@ -65,7 +65,29 @@
 | `NEXT_PUBLIC_DEFAULT_LANGUAGE` | Язык по умолчанию, например `ru` |
 | `PROXY_HOST`, `PROXY_USER`, `PROXY_PASS` | Настройки прокси для исходящих запросов (если используются) |
 
-Публичные переменные с префиксом `NEXT_PUBLIC_*` для production-сборки должны быть доступны на этапе `next build` (локально через `.env`, в CI — через секреты workflow / build-args).
+На VPS для `docker compose -f docker-compose.prod.yml` в `.env` на сервере также нужен **`DOCKER_USERNAME`** — тот же логин Docker Hub, что и в образе `<DOCKER_USERNAME>/max-wedding:latest` (его подставляет CI перед `docker compose up`).
+
+Публичные переменные с префиксом `NEXT_PUBLIC_*` для production-сборки должны быть доступны на этапе `next build` (локально через `.env`, в CI — через секреты GitHub Environment / build-args).
+
+## Telegram-бот: гости и админка
+
+При первом обращении к боту (команда **`/start`**) в таблице **`user`** создаётся или обновляется запись по **Telegram ID**; по умолчанию роль **`USER`**. Обычным гостям в меню команд бота доступен только **`/start`** — бот отвечает ссылкой на сайт (`NEXT_PUBLIC_APP_URL`).
+
+**Админка** доступна пользователям с ролью **`ADMIN`** в той же таблице **`user`**, без мягкого удаления (`deleted` пусто). Роль назначается вручную в PostgreSQL (после того как человек хотя бы раз написал боту, чтобы появилась строка с его `telegram_id`). Список команд для админов задаётся в `server/telegram/telegram-bot-command-menu.ts`; при старте сервера бот синхронизирует меню команд в личке для каждого известного админа, а при **`/start`** админу дополнительно показывается краткая шпаргалка по командам.
+
+Для администраторов (кратко):
+
+| Команда | Назначение |
+|---------|------------|
+| `/miniapp` | Кнопка **Web App** — Mini App редактора меню по пути `/tg-miniapp/menu-admin` относительно `NEXT_PUBLIC_APP_URL` (если URL не задан, команда сообщит об ошибке) |
+| `/settings` | Настройки сайта (например фон с сердечками), переключатели в чате |
+| `/menu` | Редактор каталога блюд и напитков прямо в чате (инлайн-кнопки и черновики) |
+| `/list` | Последние заявки гостей |
+| `/last` | Последняя заявка |
+| `/summary` | Сводка по анкетам |
+| `/export` | Выгрузка заявок в Excel |
+
+О **новой заявке** с сайта все активные админы из БД получают сообщение в Telegram (если задан `TELEGRAM_BOT_TOKEN`). Реализация команд и проверка прав — в `server/services/telegram/telegram-wedding-bot-commands.service.ts`.
 
 ## База данных и миграции
 
@@ -92,24 +114,32 @@ npm run dev-prod
 
 ## Docker
 
+Образ собирается из `Dockerfile`: multi-stage сборка, `ENTRYPOINT ["npm", "run"]`, команды в compose — имена npm-скриптов (`migration:run:prod`, `start:server:prod`).
+
 **Разработка** (`Dockerfile.dev`, порт контейнера по умолчанию 3016):
 
 ```bash
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-В `docker-compose.dev.yml` указаны тома и `extra_hosts` для доступа к PostgreSQL на хосте. Пути томов при необходимости измените под свою машину.
+В `docker-compose.dev.yml` заданы `extra_hosts` для доступа к PostgreSQL на хосте и тома для логов и каталога `public` — пути при необходимости измените под свою машину (в репозитории могут быть примеры под Windows).
 
-**Продакшен** описан в `docker-compose.prod.yml`: отдельный сервис `migrations` выполняет `migration:run:prod`, затем поднимается `server` с `start:server:prod`. Образ собирается из `Dockerfile`. На сервере ожидаются каталоги вроде `/srv/logs` и примонтированный `public` — см. compose-файл.
+**Продакшен** (`docker-compose.prod.yml`):
+
+- Сервис **`migrations`** — одноразовый запуск `npm run migration:run:prod` (образ тот же, что у приложения).
+- Сервис **`server`** — `npm run start:server:prod`, стартует только после успешного завершения миграций (`depends_on` с `condition: service_completed_successfully`).
+- Оба сервиса используют **`network_mode: "host"`** (приложение слушает порт хоста из `PORT` в `.env`, обычно 3015).
+- Тома: логи (`/srv/logs`), статический `public` сайта, при необходимости монтирование `/etc/localtime` и `/etc/timezone` для часового пояса. Пути вроде `/var/www/…/public` в файле — пример под конкретный сервер; под свою установку скорректируйте их и положите рядом с compose актуальный `.env`.
 
 ## Деплой (CI/CD)
 
-При пуше в ветку **`production`** (или ручной запуск workflow) GitHub Actions:
+Workflow **Deploy to VPS [max-wedding]** (`.github/workflows/deploy.yml`):
 
-1. Собирает Docker-образ и пушит в Docker Hub (`<DOCKER_USERNAME>/max-wedding:latest`).
-2. Копирует `docker-compose.prod.yml` на VPS по SSH и выполняет `docker compose pull/up`.
+- **Триггеры:** push в ветку **`production`** или ручной запуск (**workflow_dispatch**).
+- **Сборка:** job `build` в GitHub Environment **`production`** (секреты и protection rules задаются для этого environment). Собирается образ **linux/amd64**, пушится в Docker Hub: `<DOCKER_USERNAME>/max-wedding:latest`.
+- **Деплой:** на VPS по SSH копируется `docker-compose.prod.yml` в каталог приложения (в workflow — `/var/www/veremevs.ru/`), затем выполняется `docker login`, `docker pull`, экспорт `DOCKER_USERNAME`, `docker compose … down` и `up -d`, в конце `docker image prune -f`.
 
-Нужные секреты репозитория: Docker Hub, SSH к серверу, параметры `NEXT_PUBLIC_*` для билда и др. — см. `.github/workflows/deploy.yml`.
+Секреты репозитория / environment (имена из workflow): **`DOCKER_USERNAME`**, **`DOCKER_TOKEN`**, **`NEXT_PUBLIC_APP_NAME`**, **`NEXT_PUBLIC_APP_URL`**, **`NEXT_PUBLIC_LANGUAGE_KEY`**, **`NEXT_PUBLIC_DEFAULT_LANGUAGE`** (build-args), **`SERVER_HOST`**, **`SERVER_USER`**, **`AM_PROJECTS_SSH_PRIVATE_KEY`**.
 
 ## Скрипты npm
 
@@ -122,6 +152,7 @@ docker compose -f docker-compose.dev.yml up --build
 | `npm run start:server:prod` | Старт с `DB=HOST` (типично для хоста с файловыми логами) |
 | `npm run start:server:docker:dev` | Старт в Docker dev (`DB=LOCAL`, `IS_DOCKER=TRUE`) |
 | `npm run lint` | ESLint для `src`, `server`, `shared` |
+| `npm run test` | Тесты Node (`tsx --test`, `server/**/*.test.ts`) |
 | `npm run migration:*` | См. раздел про миграции |
 
 ## Структура репозитория (кратко)
